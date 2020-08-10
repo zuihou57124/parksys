@@ -1,0 +1,37 @@
+
+server:
+  port: 8088
+
+spring:
+
+  #  #redis配置
+  #  redis:
+  #    host: 59.110.137.100
+  #    port: 6379
+
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      url: jdbc:mysql://127.0.0.1:3306/parksys?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+      username: root
+      password: 4188qinwei
+  jackson:
+    date-format: yyyy-MM-dd HH:mm
+    time-zone: GMT+8
+#      initial-size: 10
+#      max-active: 100
+#      min-idle: 10
+#      max-wait: 60000
+#      pool-prepared-statements: true
+#      max-pool-prepared-statement-per-connection-size: 20
+#      time-between-eviction-runs-millis: 60000
+#      min-evictable-idle-time-millis: 300000
+
+
+mybatis-plus:
+  mapper-locations: classpath:/mapper/**/*.xml
+
+logging:
+  level:
+    com.qcw.parksys: debug
