@@ -6,6 +6,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Collections;
+
 /**
  * 配置http
  */
@@ -17,6 +19,12 @@ public class RestConfiguration {
 
     @Bean
     public RestTemplate restTemplate(){
-        return builder.build();
+        RestTemplate build = builder.build();
+        //配置 user-agent
+        build.setInterceptors((Collections.singletonList(new UserAgentInterceptor())));
+        //添加响应类型 text-html
+        build.getMessageConverters().add(new WxMappingJackson2HttpMessageConverter());
+
+        return build;
     }
 }

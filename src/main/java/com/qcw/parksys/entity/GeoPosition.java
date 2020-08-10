@@ -7,30 +7,17 @@ import lombok.Data;
 @TableName("geoposition")
 public class GeoPosition {
 
+    private Integer id;
+
     private String ip;
 
-    private String country;
+    //省份
+    private String pro;
 
-    private String area;
-
-    private String region;
-
+    //城市
     private String city;
 
-    private String county;
-
-    private String isp;
-
-    private String country_id;
-
-    private String area_id;
-
-    private String region_id;
-
-    private String city_id;
-
-    private String county_id;
-
-    private String isp_id;
+    //区域
+    private String region;
 
 }

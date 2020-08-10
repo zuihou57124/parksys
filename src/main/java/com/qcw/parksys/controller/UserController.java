@@ -7,22 +7,17 @@ import java.util.UUID;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.qcw.parksys.common.myconst.MyConst;
-import com.qcw.parksys.config.MyIntercepter;
 import com.qcw.parksys.entity.GeoPosition;
 import com.qcw.parksys.entity.SysInfoEntity;
-import com.qcw.parksys.vo.SysInfoVo;
 import com.qcw.parksys.vo.UserVo;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpRequest;
 import org.springframework.web.bind.annotation.*;
 
 import com.qcw.parksys.entity.UserEntity;
 import com.qcw.parksys.service.UserService;
 import com.qcw.parksys.common.utils.PageUtils;
 import com.qcw.parksys.common.utils.R;
-
-import javax.servlet.http.HttpServletRequest;
 
 
 /**
@@ -99,7 +94,9 @@ public class UserController {
     }
 
     /**
-     * 获取用户地理位置(通过ip获得,如果用户使用代理,可能不正确)
+     * 获取用户地理位置
+     * 通过ip获得=>如果用户使用代理,可能不正确,精确到区县
+     * 通过浏览器端获取地理位置=>可以获取经纬度
      */
     @RequestMapping("currposition")
     public R currPositionByIp(String ip){

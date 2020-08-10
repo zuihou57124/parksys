@@ -3,6 +3,7 @@ package com.qcw.parksys.service.impl;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.qcw.parksys.common.utils.IPUtils;
+import com.qcw.parksys.component.UserAgentInterceptor;
 import com.qcw.parksys.entity.GeoPosition;
 import com.qcw.parksys.entity.OrderEntity;
 import com.qcw.parksys.entity.SysInfoEntity;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +32,7 @@ import com.qcw.parksys.entity.UserEntity;
 import com.qcw.parksys.service.UserService;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
 import javax.servlet.http.HttpServletRequest;
@@ -82,17 +85,25 @@ public class UserServiceImpl extends ServiceImpl<UserDao, UserEntity> implements
         params.add("ip",ip);
         params.add("accessKey","alibaba-inc");
         //请求地址
+        //淘宝接口
         String uri="http://ip.taobao.com/outGetIpInfo";
+        //其他接口
+        String uri2="http://whois.pconline.com.cn/ipJson.jsp?ip="+ip+"&json=true";
         HttpHeaders headers = new HttpHeaders();
         //以表单方式提交数据
-        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        //headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        //以json方式提交数据
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
         HttpEntity<MultiValueMap<String,String>> reEntity = new HttpEntity<>(params,headers);
-        JSONObject json = restTemplate.exchange(uri, HttpMethod.POST, reEntity,JSONObject.class).getBody();
-        if(json==null){
+        //JSONObject json = restTemplate.exchange(uri2, HttpMethod.GET, reEntity,JSONObject.class).getBody();
+        String jsonstr = restTemplate.getForObject(uri2, String.class);
+        if(jsonstr==null || StringUtils.isEmpty(jsonstr)){
             return null;
         }
-        LinkedHashMap<String,String> data = json.getObject("data", LinkedHashMap.class);
-        GeoPosition geoPosition = JSONObject.parseObject(JSONObject.toJSONString(data),GeoPosition.class);
+        //LinkedHashMap<String,String> data = json.getObject("data", LinkedHashMap.class);
+        //GeoPosition geoPosition = JSONObject.parseObject(JSONObject.toJSONString(json),GeoPosition.class);
+        GeoPosition geoPosition = JSONObject.parseObject(jsonstr,GeoPosition.class);
 
         return geoPosition;
     }
