@@ -54,22 +54,20 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
 
     /**
      * @param params
-     * @return
-     * 查询用户预约情况
+     * @return 查询用户预约情况
      */
     @Override
     public PageUtils getUserBooks(Map<String, Object> params) {
 
         QueryWrapper<OrderEntity> wrapper = new QueryWrapper<>();
         Object userId = params.get("userId");
-        if(userId!=null){
+        if (userId != null) {
             wrapper.eq("user_id", userId);
         }
         //查询出已预约或者预约已失效的记录
         wrapper.eq("status", MyConst.OrderStatus.CREATED.getCode())
                 .or()
-                .eq("status",MyConst.OrderStatus.TOKEN.getCode());
-
+                .eq("status", MyConst.OrderStatus.TOKEN.getCode());
 
 
         IPage<OrderEntity> page = this.page(
@@ -92,7 +90,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
             TimeZone.setDefault(TimeZone.getTimeZone("GMT+8"));
             Calendar calendar = Calendar.getInstance();
             calendar.setTime(item.getCreateTime());
-            calendar.add(Calendar.MINUTE,5);
+            calendar.add(Calendar.MINUTE, 5);
             Date validTime = calendar.getTime();
             userBooksVo.setValidTime(validTime);
             //System.out.println(userBooksVo.getValidTime());
@@ -124,8 +122,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
 
     /**
      * @param params
-     * @return
-     * 付款
+     * @return 付款
      */
     @Override
     @Transactional
@@ -144,7 +141,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
 
         //重新计算预约是否失效
         long timestamp = new Date().getTime() - order.getCreateTime().getTime();
-        if(timestamp / (1000) >= 300) {
+        if (timestamp / (1000) >= 300) {
             return 50003;
         }
         //重新获取车位的实时信息，可能会出现预约失效后已被其他用户预约的情况
@@ -155,16 +152,16 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
         //时长
         Integer duration = (Integer) params.get("duration");
         //应付总额
-        Integer total = type.getPrice()*duration;
+        Integer total = type.getPrice() * duration;
         //实付总额(打折等优惠)
         Integer realPay = total;
         //用户余额是否足够
-        if(user.getMoney()<total){
+        if (user.getMoney() < total) {
             return 50002;
         }
         //扣除用户余额和更新用户累计花费
-        user.setMoney(user.getMoney()-total);
-        user.setTotalCost(user.getTotalCost()+realPay);
+        user.setMoney(user.getMoney() - total);
+        user.setTotalCost(user.getTotalCost() + realPay);
 
         //修改订单信息
         order.setStatus(MyConst.OrderStatus.DONE.getCode());
@@ -179,7 +176,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
         TimeZone.setDefault(TimeZone.getTimeZone("GMT+8"));
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(new Date());
-        calendar.add(Calendar.HOUR,duration);
+        calendar.add(Calendar.HOUR, duration);
         Date nextTime = calendar.getTime();
         space.setNextTime(nextTime);
         space.setStatus(MyConst.SpaceStatus.TOKEN.getCode());
@@ -193,8 +190,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
 
     /**
      * @param params
-     * @return
-     * 获取即将到期的订单 ,并且封装成消息实体类
+     * @return 获取即将到期的订单 ,并且封装成消息实体类
      */
     @Override
     public List<SysInfoEntity> getWillValidOrdersByUserIdAndToSysInfo(Map<String, Object> params) {
@@ -211,7 +207,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
          * 这里应该注意,扫描即将过期的订单时,条件应该是 时间足够 的订单，
          * 即valid_status = 3,如果判断即将过期，再设置成 0，即将过期
          **/
-        wrapper.eq("valid_status",3);
+        wrapper.eq("valid_status", 3);
         //这里打算分页获取,先注释
 //        IPage<OrderEntity> page = this.page(
 //                new Query<OrderEntity>().getPage(params),
@@ -220,7 +216,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
         //List<OrderEntity> orderList = page.getRecords();
         List<OrderEntity> orderList = this.list(wrapper);
         //订单被扫描后,scaned设置为1
-        orderList = orderList.stream().peek((item)-> item.setScaned(1)).collect(Collectors.toList());
+        orderList = orderList.stream().peek((item) -> item.setScaned(1)).collect(Collectors.toList());
         this.updateBatchById(orderList);
 
         List<SysInfoEntity> sysInfoVos = orderList.stream().map((item) -> {
@@ -229,7 +225,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
             //预约即将失效时
             if (item.getStatus().equals(MyConst.OrderStatus.CREATED.getCode())) {
                 long timestamp = new Date().getTime() - item.getCreateTime().getTime();
-                System.out.println("间隔:  "+timestamp/1000);
+                System.out.println("间隔:  " + timestamp / 1000);
                 //计算预约时间和当前时间的时间差
                 if (timestamp / 1000 >= 200 && timestamp / 1000 <= 300) {
                     sysInfo.setCreateTime(new Date());
@@ -254,7 +250,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
             //车位即将到期时
             if (item.getStatus().equals(MyConst.OrderStatus.DONE.getCode())) {
                 long timestamp = new Date().getTime() - space.getNextTime().getTime();
-                System.out.println("间隔:  "+timestamp/1000);
+                System.out.println("间隔:  " + timestamp / 1000);
                 //计算车位到期时间和当前时间的时间差
                 if (timestamp / 1000 >= 600 && timestamp / 1000 <= 1200) {
                     sysInfo.setCreateTime(new Date());
@@ -285,15 +281,14 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
 
     /**
      * @param params
-     * @return
-     * 查询用户订单
+     * @return 查询用户订单
      */
     @Override
     public PageUtils getUserOrders(Map<String, Object> params) {
 
         QueryWrapper<OrderEntity> wrapper = new QueryWrapper<>();
         Object userId = params.get("userId");
-        if(userId!=null){
+        if (userId != null) {
             wrapper.eq("user_id", userId);
         }
 
@@ -302,7 +297,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
         status.add(40002);
         status.add(40003);
         status.add(40004);
-        wrapper.in("status",status);
+        wrapper.in("status", status);
 
         IPage<OrderEntity> page = this.page(
                 new Query<OrderEntity>().getPage(params),
@@ -365,13 +360,12 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
 
     /**
      * @param params
-     * @return
-     * 获取已经到期的订单或预约 ,并且封装成消息实体类
+     * @return 获取已经到期的订单或预约 ,并且封装成消息实体类
      * 车位过期后,更新车位状态
      */
     @Override
     @Transactional
-    public List<SysInfoEntity> getValidOrdersByUserIdAndToSysInfo(Map<String, Object> params)  {
+    public List<SysInfoEntity> getValidOrdersByUserIdAndToSysInfo(Map<String, Object> params) {
 
         //Object userId = params.get("userId");
         //首先获取指定用户的所有订单
@@ -380,10 +374,10 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
         //只扫描系统之前未扫描过的订单,防止消息重复(这里会出问题,先注释)
         //wrapper.eq("scaned",0);
         //扫描即将过期的订单
-        wrapper.eq("valid_status",0);
+        wrapper.eq("valid_status", 0);
         List<OrderEntity> orderList = this.list(wrapper);
         //订单被扫描后,scaned设置为1
-        orderList = orderList.stream().peek((item)-> item.setScaned(1)).collect(Collectors.toList());
+        orderList = orderList.stream().peek((item) -> item.setScaned(1)).collect(Collectors.toList());
         this.updateBatchById(orderList);
 
         List<SysInfoEntity> sysInfoVos = orderList.stream().map((item) -> {
@@ -392,9 +386,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
             //预约已经失效
             if (item.getStatus().equals(MyConst.OrderStatus.CREATED.getCode())) {
                 long timestamp = item.getCreateTime().getTime() - new Date().getTime();
-                System.out.println("间隔:  "+timestamp/1000);
+                System.out.println("间隔:  " + timestamp / 1000);
                 //计算到期时间和当前时间的时间差
-                if (timestamp<=0) {
+                if (timestamp <= 0) {
                     sysInfo = new SysInfoEntity();
                     sysInfo.setUserId(item.getUserId());
                     sysInfo.setCreateTime(new Date());
@@ -417,7 +411,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
             //车位已经到期时
             if (item.getStatus().equals(MyConst.OrderStatus.DONE.getCode())) {
                 long timestamp = space.getNextTime().getTime() - new Date().getTime();
-                System.out.println("间隔:  "+timestamp/1000);
+                System.out.println("间隔:  " + timestamp / 1000);
                 //计算车位到期时间和当前时间的时间差
                 if (timestamp <= 0) {
 
@@ -464,16 +458,16 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
         Date curr = new Date();
         long timestamp = nextTime.getTime() - curr.getTime();
         //车位已到期，不能退款
-        if(timestamp <= 0){
+        if (timestamp <= 0) {
             return MyConst.BackMoneyEnum.VALID.getCode();
         }
         //计算剩余时间求出退款金额
-        timestamp = (int)(timestamp/1000/3600);
-        float restTime = (float)timestamp / order.getDuration();
-        Integer backMoney = (int)(restTime * 0.9 * order.getTotalReal());
+        timestamp = (int) (timestamp / 1000 / 3600);
+        float restTime = (float) timestamp / order.getDuration();
+        Integer backMoney = (int) (restTime * 0.9 * order.getTotalReal());
         //退款和扣除积分
-        user.setMoney(user.getMoney()+backMoney);
-        user.setIntegral(user.getIntegral()-backMoney);
+        user.setMoney(user.getMoney() + backMoney);
+        user.setIntegral(user.getIntegral() - backMoney);
         //设置订单状态
         order.setStatus(MyConst.OrderStatus.BACKED.getCode());
         order.setValidStatus(1);

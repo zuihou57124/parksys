@@ -8,11 +8,13 @@ import java.util.UUID;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.qcw.parksys.common.myconst.MyConst;
 import com.qcw.parksys.config.MyIntercepter;
+import com.qcw.parksys.entity.GeoPosition;
 import com.qcw.parksys.entity.SysInfoEntity;
 import com.qcw.parksys.vo.SysInfoVo;
 import com.qcw.parksys.vo.UserVo;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpRequest;
 import org.springframework.web.bind.annotation.*;
 
 import com.qcw.parksys.entity.UserEntity;
@@ -20,6 +22,7 @@ import com.qcw.parksys.service.UserService;
 import com.qcw.parksys.common.utils.PageUtils;
 import com.qcw.parksys.common.utils.R;
 
+import javax.servlet.http.HttpServletRequest;
 
 
 /**
@@ -93,6 +96,16 @@ public class UserController {
         List<SysInfoEntity> sysInfos = userService.getSysInfos(params);
 
         return R.ok().put("data",sysInfos);
+    }
+
+    /**
+     * 获取用户地理位置(通过ip获得,如果用户使用代理,可能不正确)
+     */
+    @RequestMapping("currposition")
+    public R currPositionByIp(String ip){
+
+        GeoPosition currPostion = userService.getCurrPostionByIp(ip);
+        return R.ok().put("data",currPostion);
     }
 
     /**
