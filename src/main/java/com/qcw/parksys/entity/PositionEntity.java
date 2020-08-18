@@ -30,6 +30,11 @@ public class PositionEntity implements Serializable {
 	private String positionName;
 
 	/**
+	 * 省市区
+	 */
+	private String geoPosition;
+
+	/**
 	 * 车位总数
 	 */
 	private Integer num;

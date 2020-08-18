@@ -21,6 +21,7 @@ import java.util.Map;
  * @email zuihou57124@gmail.com
  * @date 2020-08-03 09:33:17
  */
+@CrossOrigin
 @RestController
 @RequestMapping("parksys")
 public class SysInfoController {
@@ -35,6 +36,19 @@ public class SysInfoController {
      */
     @PostMapping("getsysinfo")
     public R getSysInfoByUserId(@RequestBody Map<String, Object> params){
+
+        PageUtils page = sysInfoService.getSysInfoList(params);
+
+        return R.ok().put("page",page);
+    }
+
+    /**
+     * @param params
+     * @return
+     * 标为已读
+     */
+    @PostMapping("setReaded")
+    public R setReaded(@RequestBody Map<String, Object> params){
 
         PageUtils page = sysInfoService.getSysInfoList(params);
 

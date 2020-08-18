@@ -19,6 +19,9 @@ import com.qcw.parksys.service.UserService;
 import com.qcw.parksys.common.utils.PageUtils;
 import com.qcw.parksys.common.utils.R;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
+
 
 /**
  * 
@@ -51,7 +54,7 @@ public class UserController {
      * 登陆
      */
     @PostMapping("login")
-    public R login(@RequestBody UserVo userVo){
+    public R login(@RequestBody UserVo userVo, HttpServletRequest request){
 
         //验证码出错
         if(!userVo.getCode().equals(UserController.code.get())){
@@ -63,6 +66,11 @@ public class UserController {
         wrapper.eq("password",userVo.getPassword());
         UserEntity user = userService.getOne(wrapper);
         if(user!=null){
+
+            //登录成功,把用户信息存放到session中
+            HttpSession session = request.getSession();
+            session.setAttribute("user",user);
+
             return R.ok().put("user", user);
         }
         //用户名或密码错误
