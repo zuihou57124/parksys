@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 //开启定时任务
 @EnableScheduling
 //过滤器扫描
-@ServletComponentScan
+//@ServletComponentScan
 public class ParksysApplication {
 
     public static void main(String[] args) {

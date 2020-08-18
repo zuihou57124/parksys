@@ -40,7 +40,7 @@ public class OrderController {
     /**
      * 查询用户预约情况
      */
-    @PostMapping("/getUserBooks")
+    @PostMapping("getUserBooks")
     public R getUserBooks(@RequestBody Map<String, Object> params) {
         PageUtils page = orderService.getUserBooks(params);
 
@@ -50,7 +50,7 @@ public class OrderController {
     /**
      * 查询用户订单
      */
-    @PostMapping("/getUserOrders")
+    @PostMapping("getUserOrders")
     public R getUserOrders(@RequestBody Map<String, Object> params) {
         PageUtils page = orderService.getUserOrders(params);
 

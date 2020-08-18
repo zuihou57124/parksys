@@ -21,7 +21,6 @@ import com.qcw.parksys.common.utils.R;
  * @email zuihou57124@gmail.com
  * @date 2020-08-03 09:33:17
  */
-@CrossOrigin
 @RestController
 @RequestMapping("parksys/type")
 public class TypeController {
