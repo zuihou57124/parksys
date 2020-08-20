@@ -39,4 +39,9 @@ public class SpaceVo {
      */
     private Date nextTime;
 
+    /**
+     * 图片地址
+     */
+    private String img;
+
 }

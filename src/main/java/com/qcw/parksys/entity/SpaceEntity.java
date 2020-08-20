@@ -42,4 +42,14 @@ public class SpaceEntity implements Serializable {
 	 */
 	private Date nextTime;
 
+	/**
+	 * 图片地址
+	 */
+	private String img;
+
+	/**
+	 * 车位号(与车位id不同,车位号是所在地区或停车场的编号)
+	 */
+	private Integer numPosition;
+
 }

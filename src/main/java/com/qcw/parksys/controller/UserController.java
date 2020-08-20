@@ -70,7 +70,8 @@ public class UserController {
             //登录成功,把用户信息存放到session中
             HttpSession session = request.getSession();
             session.setAttribute("user",user);
-
+            //设置session有效期
+            session.setMaxInactiveInterval(60*120);
             return R.ok().put("user", user);
         }
         //用户名或密码错误
@@ -111,6 +112,20 @@ public class UserController {
 
         GeoPosition currPostion = userService.getCurrPostionByIp(ip);
         return R.ok().put("data",currPostion);
+    }
+
+    /**
+     * 判断session是否失效
+     */
+    @RequestMapping("loginvalid")
+    public R loginValid(HttpServletRequest request){
+
+        HttpSession session = request.getSession();
+        UserEntity user = (UserEntity) session.getAttribute("user");
+        if(user==null){
+            return R.error().put("msg","登录已失效,请重新登录");
+        }
+        return R.ok().put("msg","success");
     }
 
     /**

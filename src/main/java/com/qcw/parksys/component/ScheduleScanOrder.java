@@ -52,6 +52,8 @@ public class ScheduleScanOrder {
             //间隔大于等于30分钟,取消订单
             if (timestamp / (1000) >= 300) {
                 order.setStatus(MyConst.OrderStatus.TOKEN.getCode());
+                //设置订单为已经过期
+                order.setValidStatus(1);
                 Integer spaceId = order.getSpaceId();
                 SpaceEntity space = spaceService.getOne(new QueryWrapper<SpaceEntity>().eq("id", spaceId));
                 space.setStatus(MyConst.SpaceStatus.AVALIABLE.getCode());

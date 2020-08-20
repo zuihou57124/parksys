@@ -113,6 +113,7 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceDao, SpaceEntity> impleme
                     spaceVo.setType(typeEntity.getTypeName());
                     spaceVo.setStatus(item.getStatus());
                     spaceVo.setNextTime(item.getNextTime());
+                    spaceVo.setImg(item.getImg());
 
                     return spaceVo;
                 }).collect(Collectors.toList());
@@ -148,15 +149,14 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceDao, SpaceEntity> impleme
         //订单金额
         int totalMoney = bookParkVo.getDuration()*type.getPrice();
         space.setStatus(MyConst.SpaceStatus.BOOKED.getCode());
-
-        //更新车位到期时间(预约不应该设置到期时间,因为还没有付,只有预约失效时间)
+        //更新车位到期时间(预约有效期为5分钟,设置5分钟)
         //TODO 这里应该考虑到期之前用户续费的问题，先留着
         TimeZone.setDefault(TimeZone.getTimeZone("GMT+8"));
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(new Date());
-        calendar.add(Calendar.HOUR, bookParkVo.getDuration());
+        calendar.add(Calendar.MINUTE,5);
         Date nextTime = calendar.getTime();
-        //space.setNextTime(nextTime);
+        space.setNextTime(nextTime);
 
         //构建订单项
         //构建订单项时，如果是预约，不该填充金额，到期时间等字段

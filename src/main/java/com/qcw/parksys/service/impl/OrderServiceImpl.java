@@ -217,10 +217,10 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
         List<OrderEntity> orderList = this.list(wrapper);
         //订单被扫描后,scaned设置为1
         orderList = orderList.stream().peek((item) -> item.setScaned(1)).collect(Collectors.toList());
-        this.updateBatchById(orderList);
+        //this.updateBatchById(orderList);
 
         List<SysInfoEntity> sysInfoVos = orderList.stream().map((item) -> {
-            SysInfoEntity sysInfo = null;
+            SysInfoEntity sysInfo =  null;
             SpaceEntity space = spaceService.getById(item.getSpaceId());
             //预约即将失效时
             if (item.getStatus().equals(MyConst.OrderStatus.CREATED.getCode())) {
@@ -228,6 +228,8 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
                 System.out.println("间隔:  " + timestamp / 1000);
                 //计算预约时间和当前时间的时间差
                 if (timestamp / 1000 >= 200 && timestamp / 1000 <= 300) {
+                    sysInfo = new SysInfoEntity();
+
                     sysInfo.setCreateTime(new Date());
                     sysInfo = new SysInfoEntity();
                     sysInfo.setUserId(item.getUserId());
@@ -239,7 +241,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
                     //消息实体封装好后, readed 初始值为 0 ,即未读
                     sysInfo.setReaded(0);
 
-                    //设置订单即将过期,下次定时任务可以不用扫描，减少开销
+                    //设置订单即将过期,下次定时任务可以不用扫描
                     item.setValidStatus(0);
                     this.updateById(item);
 
@@ -253,6 +255,8 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
                 System.out.println("间隔:  " + timestamp / 1000);
                 //计算车位到期时间和当前时间的时间差
                 if (timestamp / 1000 >= 600 && timestamp / 1000 <= 1200) {
+                    sysInfo = new SysInfoEntity();
+
                     sysInfo.setCreateTime(new Date());
                     sysInfo = new SysInfoEntity();
                     sysInfo.setUserId(item.getUserId());
@@ -390,6 +394,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
                 //计算到期时间和当前时间的时间差
                 if (timestamp <= 0) {
                     sysInfo = new SysInfoEntity();
+
                     sysInfo.setUserId(item.getUserId());
                     sysInfo.setCreateTime(new Date());
                     PositionEntity position = positionService.getById(space.getPositionId());
@@ -421,6 +426,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
                     spaceService.updateById(space);
 
                     sysInfo = new SysInfoEntity();
+
                     sysInfo.setUserId(item.getUserId());
                     sysInfo.setCreateTime(new Date());
                     PositionEntity position = positionService.getById(space.getPositionId());
@@ -446,6 +452,11 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
         return sysInfoVos;
     }
 
+    /**
+     * @param backMoneyVo
+     * @return
+     * 退款
+     */
     @Override
     @Transactional
     public Integer backMoney(BackMoneyVo backMoneyVo) {
