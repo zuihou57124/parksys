@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.qcw.parksys.common.myconst.MyConst;
@@ -12,6 +13,7 @@ import com.qcw.parksys.entity.SysInfoEntity;
 import com.qcw.parksys.vo.UserVo;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import com.qcw.parksys.entity.UserEntity;
@@ -37,7 +39,8 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    private static ThreadLocal<String> code = new ThreadLocal<>();
+    @Autowired
+    StringRedisTemplate redisTemplate;
 
     /**
      * 列表
@@ -56,9 +59,14 @@ public class UserController {
     @PostMapping("login")
     public R login(@RequestBody UserVo userVo, HttpServletRequest request){
 
+        HttpSession session = request.getSession();
+        String sessionId = session.getId();
+        //获取redis中的验证码,与用户输入的验证码进行比较
+        String redisCode = redisTemplate.opsForValue().get("user:" + sessionId);
+
         //验证码出错
-        if(!userVo.getCode().equals(UserController.code.get())){
-            //return R.error(MyConst.MemberEnum.USER_LOGIN_CODE.getCode(),MyConst.MemberEnum.USER_LOGIN_CODE.getMsg());
+        if(!userVo.getCode().equals(redisCode)){
+            return R.error(MyConst.MemberEnum.USER_LOGIN_CODE.getCode(),MyConst.MemberEnum.USER_LOGIN_CODE.getMsg());
         }
 
         QueryWrapper<UserEntity> wrapper = new QueryWrapper<>();
@@ -68,7 +76,7 @@ public class UserController {
         if(user!=null){
 
             //登录成功,把用户信息存放到session中
-            HttpSession session = request.getSession();
+            session = request.getSession();
             session.setAttribute("user",user);
             //设置session有效期
             session.setMaxInactiveInterval(60*120);
@@ -82,11 +90,16 @@ public class UserController {
      * 获取验证码
      */
     @RequestMapping("getcode")
-    public R getCode(){
+    public R getCode(HttpServletRequest request){
 
         String code = UUID.randomUUID().toString().substring(0,4);
         //MyIntercepter.code.set(code);
-        System.out.println(UserController.code.get());
+        HttpSession session = request.getSession();
+        String sessionId = session.getId();
+        //向redis存入验证码,使用sessionid来区分不同的用户,验证码2分钟内有效
+        redisTemplate.opsForValue().set("user:"+sessionId,code,2, TimeUnit.MINUTES);
+
+        System.out.println(redisTemplate.opsForValue().get("user:"+sessionId));
 
         return R.ok().put("code",code);
     }
