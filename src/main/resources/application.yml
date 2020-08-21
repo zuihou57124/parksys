@@ -9,6 +9,15 @@ spring:
     host: 47.106.81.87
     port: 6379
 
+  #阿里云 oss 配置
+  cloud:
+    alicloud:
+      access-key: LTAI4G872Sj3DbkJZX2jDR3j
+      secret-key: 1jLnw7OYEEaSKWZ0h61pvLYsbLkQjF
+      oss:
+        endpoint: oss-cn-shenzhen.aliyuncs.com
+        bucket: qinfengoss
+
   #数据源配置
   datasource:
     type: com.alibaba.druid.pool.DruidDataSource

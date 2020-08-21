@@ -66,7 +66,8 @@ public class WebConfig implements WebMvcConfigurer {
                 .addPathPatterns("/**")
                 .excludePathPatterns("/parksys/user/login")
                 .excludePathPatterns("/parksys/user/getcode")
-                .excludePathPatterns("/parksys/space/spacelist");
+                .excludePathPatterns("/parksys/space/spacelist")
+                .excludePathPatterns("/parksys/oss/**");
 
     }
 }

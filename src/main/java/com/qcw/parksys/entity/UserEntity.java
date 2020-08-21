@@ -61,4 +61,9 @@ public class UserEntity implements Serializable {
 	 */
 	private Date createTime;
 
+	/**
+	 * 头像地址
+	 */
+	private String headImg;
+
 }
