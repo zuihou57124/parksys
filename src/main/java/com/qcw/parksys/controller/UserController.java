@@ -7,13 +7,19 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.qcw.parksys.ValidGroups.UserRegister;
 import com.qcw.parksys.common.myconst.MyConst;
+import com.qcw.parksys.common.utils.MailSend;
 import com.qcw.parksys.entity.GeoPosition;
 import com.qcw.parksys.entity.SysInfoEntity;
 import com.qcw.parksys.vo.UserVo;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.util.StringUtils;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import com.qcw.parksys.entity.UserEntity;
@@ -23,6 +29,7 @@ import com.qcw.parksys.common.utils.R;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+import javax.validation.Valid;
 
 
 /**
@@ -42,6 +49,9 @@ public class UserController {
     @Autowired
     StringRedisTemplate redisTemplate;
 
+    @Autowired
+    MailSend mailSend;
+
     /**
      * 列表
      */
@@ -54,7 +64,7 @@ public class UserController {
     }
 
     /**
-     * 登陆
+     * 登陆(使用邮箱或者用户名都可以)
      */
     @PostMapping("login")
     public R login(@RequestBody UserVo userVo, HttpServletRequest request){
@@ -71,7 +81,12 @@ public class UserController {
 
         QueryWrapper<UserEntity> wrapper = new QueryWrapper<>();
         wrapper.eq("username",userVo.getUsername());
-        wrapper.eq("password",userVo.getPassword());
+        wrapper.or()
+               .eq("email",userVo.getEmail());
+        wrapper.and((wrapper1)->{
+            wrapper1.eq("password",userVo.getPassword());
+        });
+
         UserEntity user = userService.getOne(wrapper);
         if(user!=null){
 
@@ -102,6 +117,77 @@ public class UserController {
         System.out.println(redisTemplate.opsForValue().get("user:"+sessionId));
 
         return R.ok().put("code",code);
+    }
+
+    /**
+     * 发送注册验证码(邮箱)
+     */
+    @RequestMapping("sendCodeToEmail")
+    public R sendCodeToEmail(HttpServletRequest request,@RequestParam("eamil") String email){
+
+        if(StringUtils.isEmpty(email)){
+            return R.error().put("msg","请填写邮箱账号");
+        }
+
+        if(!email.matches("^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\\\\.[a-zA-Z0-9_-]+)+$")){
+            return R.error().put("msg","邮箱格式错误");
+        }
+
+        //发送邮箱验证码判断邮箱是否已被注册
+        QueryWrapper<UserEntity> wrapper = new QueryWrapper<>();
+        wrapper.eq("username",email);
+        UserEntity user = userService.getOne(wrapper);
+        if(user!=null){
+            return R.error().put("msg","邮箱已被注册");
+        }
+
+        String code = UUID.randomUUID().toString().substring(0,5);
+        //向redis存入验证码,使用邮箱账号来区分不同的用户,验证码5分钟内有效
+        redisTemplate.opsForValue().set(email+":",code,5, TimeUnit.MINUTES);
+        //向邮箱发送验证码
+        boolean isSuccess = mailSend.sendRegisterCode("1545409483@qq.com", email, "验证码", code);
+        if(!isSuccess){
+            return R.error().put("msg","邮箱发送失败,请重试");
+        }
+
+        System.out.println(redisTemplate.opsForValue().get(email+":"));
+
+        return R.ok().put("code",code);
+    }
+
+
+    /**
+     * 注册
+     */
+    @RequestMapping("register")
+    public R register(@Validated({UserRegister.class}) UserVo userVo, BindingResult bindingResult){
+
+        List<FieldError> fieldErrors = bindingResult.getFieldErrors();
+        if (fieldErrors.size() > 0){
+
+            FieldError fieldError = fieldErrors.get(0);
+            return R.error().put("msg",fieldError.getDefaultMessage());
+
+        }
+
+        String redisCode = redisTemplate.opsForValue().get(userVo.getEmail() + ":");
+
+        //验证码出错
+        if(!userVo.getCode().equals(redisCode)){
+            return R.error(MyConst.MemberEnum.USER_LOGIN_CODE.getCode(),MyConst.MemberEnum.USER_LOGIN_CODE.getMsg());
+        }
+
+        QueryWrapper<UserEntity> wrapper = new QueryWrapper<>();
+        wrapper.eq("username",userVo.getUsername())
+               .or()
+               .eq("eamil",userVo.getEmail());
+
+        UserEntity user = userService.getOne(wrapper);
+        if(user!=null){
+            return R.error().put("msg","用户名或邮箱已被注册");
+        }
+
+        return R.ok();
     }
 
     /**

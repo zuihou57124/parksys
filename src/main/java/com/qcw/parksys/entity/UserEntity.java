@@ -28,6 +28,12 @@ public class UserEntity implements Serializable {
 	 * 用户账号
 	 */
 	private String username;
+
+	/**
+	 * 用户邮箱
+	 */
+	private String email;
+
 	/**
 	 * 密码
 	 */
