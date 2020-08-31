@@ -92,4 +92,17 @@ public class ScheduleScanOrder {
 
     }
 
+    /**
+     * 定时扫描用户信息,更新用户vip等级等信息
+     */
+    @Transactional
+    @Scheduled(cron = "*/15 * * * * ?") //测试使用 30秒 的间隔
+    public void scanAndupdateUser(){
+
+        List<SysInfoEntity> sysInfoList = userService.updateUserInfo();
+        //保存到数据库
+        sysInfoService.saveBatch(sysInfoList);
+
+    }
+
 }

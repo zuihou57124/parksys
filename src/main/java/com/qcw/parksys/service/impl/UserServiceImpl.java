@@ -17,10 +17,8 @@ import org.springframework.stereotype.Service;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -106,6 +104,62 @@ public class UserServiceImpl extends ServiceImpl<UserDao, UserEntity> implements
         GeoPosition geoPosition = JSONObject.parseObject(jsonstr,GeoPosition.class);
 
         return geoPosition;
+    }
+
+    /**
+     * @return
+     * 定时更新用户信息
+     */
+    @Override
+    public List<SysInfoEntity> updateUserInfo() {
+
+        List<SysInfoEntity> sysInfos = new ArrayList<>();
+
+        List<UserEntity> list = this.list();
+
+        list.forEach((user)->{
+            SysInfoEntity sysInfo= new SysInfoEntity();
+            switch (user.getTotalCost()/1000) {
+                case 0:
+                    if(user.getVipLevel()!=0){
+                        sysInfo.setCreateTime(new Date());
+                        sysInfo.setUserId(user.getId());
+                        sysInfo.setTitle("会员等级变化通知");
+                        sysInfo.setInfo("您好,您的会员等级由 VIP"+user.getVipLevel()+"变为 VIP0");
+                        user.setVipLevel(0);
+                    }
+                case 1:
+                    if(user.getVipLevel()!=2){
+                        sysInfo.setCreateTime(new Date());
+                        sysInfo.setUserId(user.getId());
+                        sysInfo.setTitle("会员等级变化通知");
+                        sysInfo.setInfo("您好,您的会员等级由 VIP"+user.getVipLevel()+"变为 VIP2");
+                        user.setVipLevel(2);
+                    }
+                case 2:
+                    if(user.getVipLevel()!=3){
+                        sysInfo.setCreateTime(new Date());
+                        sysInfo.setUserId(user.getId());
+                        sysInfo.setTitle("会员等级变化通知");
+                        sysInfo.setInfo("您好,您的会员等级由 VIP"+user.getVipLevel()+"变为 VIP3");
+                        user.setVipLevel(3);
+                    }
+                case 3:
+                    if(user.getVipLevel()!=4){
+                        sysInfo.setCreateTime(new Date());
+                        sysInfo.setUserId(user.getId());
+                        sysInfo.setTitle("会员等级变化通知");
+                        sysInfo.setInfo("您好,您的会员等级由 VIP"+user.getVipLevel()+"变为 VIP4");
+                        user.setVipLevel(4);
+                    }
+            }
+
+            sysInfos.add(sysInfo);
+            this.updateById(user);
+
+        });
+
+        return sysInfos;
     }
 
 }

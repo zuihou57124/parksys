@@ -14,8 +14,10 @@ import com.qcw.parksys.entity.GeoPosition;
 import com.qcw.parksys.entity.SysInfoEntity;
 import com.qcw.parksys.vo.UserVo;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
@@ -123,13 +125,13 @@ public class UserController {
      * 发送注册验证码(邮箱)
      */
     @RequestMapping("sendCodeToEmail")
-    public R sendCodeToEmail(HttpServletRequest request,@RequestParam("eamil") String email){
+    public R sendCodeToEmail(HttpServletRequest request,@RequestParam("email") String email){
 
         if(StringUtils.isEmpty(email)){
             return R.error().put("msg","请填写邮箱账号");
         }
 
-        if(!email.matches("^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\\\\.[a-zA-Z0-9_-]+)+$")){
+        if(!email.matches("^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\\.[a-zA-Z0-9_-]+)+$")){
             return R.error().put("msg","邮箱格式错误");
         }
 
@@ -159,8 +161,9 @@ public class UserController {
     /**
      * 注册
      */
-    @RequestMapping("register")
-    public R register(@Validated({UserRegister.class}) UserVo userVo, BindingResult bindingResult){
+    @PostMapping("register")
+    @Transactional
+    public R register(@RequestBody @Validated UserVo userVo, BindingResult bindingResult){
 
         List<FieldError> fieldErrors = bindingResult.getFieldErrors();
         if (fieldErrors.size() > 0){
@@ -180,11 +183,20 @@ public class UserController {
         QueryWrapper<UserEntity> wrapper = new QueryWrapper<>();
         wrapper.eq("username",userVo.getUsername())
                .or()
-               .eq("eamil",userVo.getEmail());
+               .eq("email",userVo.getEmail());
 
         UserEntity user = userService.getOne(wrapper);
         if(user!=null){
             return R.error().put("msg","用户名或邮箱已被注册");
+        }
+
+        UserEntity userEntity = new UserEntity();
+        //保存用户信息
+        BeanUtils.copyProperties(userVo,userEntity);
+        boolean save = userService.save(userEntity);
+        if(save){
+            //注册成功后，删除验证码
+            redisTemplate.delete(userVo.getEmail() + ":");
         }
 
         return R.ok();

@@ -154,7 +154,8 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
         //应付总额
         Integer total = type.getPrice() * duration;
         //实付总额(打折等优惠)
-        Integer realPay = total;
+        Integer realPay = Math.toIntExact(Math.round((double) total * vip.getDiscount()));
+
         //用户余额是否足够
         if (user.getMoney() < total) {
             return 50002;
