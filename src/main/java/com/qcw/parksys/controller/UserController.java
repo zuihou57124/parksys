@@ -1,9 +1,6 @@
 package com.qcw.parksys.controller;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -191,6 +188,8 @@ public class UserController {
         }
 
         UserEntity userEntity = new UserEntity();
+        userEntity.setCreateTime(new Date());
+        userEntity.setUpdateTime(new Date());
         //保存用户信息
         BeanUtils.copyProperties(userVo,userEntity);
         boolean save = userService.save(userEntity);

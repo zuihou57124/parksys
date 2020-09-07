@@ -226,13 +226,11 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
             //预约即将失效时
             if (item.getStatus().equals(MyConst.OrderStatus.CREATED.getCode())) {
                 long timestamp = new Date().getTime() - item.getCreateTime().getTime();
-                System.out.println("间隔:  " + timestamp / 1000);
+                System.out.println("预约即将失效间隔:  " + timestamp / 1000);
                 //计算预约时间和当前时间的时间差
                 if (timestamp / 1000 >= 200 && timestamp / 1000 <= 300) {
                     sysInfo = new SysInfoEntity();
-
                     sysInfo.setCreateTime(new Date());
-                    sysInfo = new SysInfoEntity();
                     sysInfo.setUserId(item.getUserId());
                     PositionEntity position = positionService.getById(space.getPositionId());
                     TypeEntity type = typeService.getById(space.getTypeId());
@@ -253,13 +251,11 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
             //车位即将到期时
             if (item.getStatus().equals(MyConst.OrderStatus.DONE.getCode())) {
                 long timestamp = new Date().getTime() - space.getNextTime().getTime();
-                System.out.println("间隔:  " + timestamp / 1000);
+                System.out.println("车位即将到期间隔:  " + timestamp / 1000);
                 //计算车位到期时间和当前时间的时间差
                 if (timestamp / 1000 >= 600 && timestamp / 1000 <= 1200) {
                     sysInfo = new SysInfoEntity();
-
                     sysInfo.setCreateTime(new Date());
-                    sysInfo = new SysInfoEntity();
                     sysInfo.setUserId(item.getUserId());
                     PositionEntity position = positionService.getById(space.getPositionId());
                     TypeEntity type = typeService.getById(space.getTypeId());
@@ -390,8 +386,8 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
             SpaceEntity space = spaceService.getById(item.getSpaceId());
             //预约已经失效
             if (item.getStatus().equals(MyConst.OrderStatus.CREATED.getCode())) {
-                long timestamp = item.getCreateTime().getTime() - new Date().getTime();
-                System.out.println("间隔:  " + timestamp / 1000);
+                long timestamp = (item.getCreateTime().getTime()+1000*60*5) - new Date().getTime();
+                System.out.println("预约已经失效间隔:  " + timestamp / 1000);
                 //计算到期时间和当前时间的时间差
                 if (timestamp <= 0) {
                     sysInfo = new SysInfoEntity();
@@ -417,7 +413,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
             //车位已经到期时
             if (item.getStatus().equals(MyConst.OrderStatus.DONE.getCode())) {
                 long timestamp = space.getNextTime().getTime() - new Date().getTime();
-                System.out.println("间隔:  " + timestamp / 1000);
+                System.out.println("车位已经失效间隔:  " + timestamp / 1000);
                 //计算车位到期时间和当前时间的时间差
                 if (timestamp <= 0) {
 

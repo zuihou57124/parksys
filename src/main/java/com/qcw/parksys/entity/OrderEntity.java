@@ -25,6 +25,12 @@ public class OrderEntity implements Serializable {
 	 */
 	@TableId(type = IdType.AUTO)
 	private Integer id;
+
+	/**
+	 * 支付宝订单号
+	 */
+	private String outTradeNo;
+
 	/**
 	 * 用户id
 	 */

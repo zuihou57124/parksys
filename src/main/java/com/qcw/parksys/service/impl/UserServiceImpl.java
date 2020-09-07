@@ -127,7 +127,10 @@ public class UserServiceImpl extends ServiceImpl<UserDao, UserEntity> implements
                         sysInfo.setTitle("会员等级变化通知");
                         sysInfo.setInfo("您好,您的会员等级由 VIP"+user.getVipLevel()+"变为 VIP0");
                         user.setVipLevel(0);
+                        user.setUpdateTime(new Date());
+                        this.updateById(user);
                     }
+                    break;
                 case 1:
                     if(user.getVipLevel()!=2){
                         sysInfo.setCreateTime(new Date());
@@ -135,7 +138,10 @@ public class UserServiceImpl extends ServiceImpl<UserDao, UserEntity> implements
                         sysInfo.setTitle("会员等级变化通知");
                         sysInfo.setInfo("您好,您的会员等级由 VIP"+user.getVipLevel()+"变为 VIP2");
                         user.setVipLevel(2);
+                        user.setUpdateTime(new Date());
+                        this.updateById(user);
                     }
+                    break;
                 case 2:
                     if(user.getVipLevel()!=3){
                         sysInfo.setCreateTime(new Date());
@@ -143,7 +149,10 @@ public class UserServiceImpl extends ServiceImpl<UserDao, UserEntity> implements
                         sysInfo.setTitle("会员等级变化通知");
                         sysInfo.setInfo("您好,您的会员等级由 VIP"+user.getVipLevel()+"变为 VIP3");
                         user.setVipLevel(3);
+                        user.setUpdateTime(new Date());
+                        this.updateById(user);
                     }
+                    break;
                 case 3:
                     if(user.getVipLevel()!=4){
                         sysInfo.setCreateTime(new Date());
@@ -151,12 +160,15 @@ public class UserServiceImpl extends ServiceImpl<UserDao, UserEntity> implements
                         sysInfo.setTitle("会员等级变化通知");
                         sysInfo.setInfo("您好,您的会员等级由 VIP"+user.getVipLevel()+"变为 VIP4");
                         user.setVipLevel(4);
+                        user.setUpdateTime(new Date());
+                        this.updateById(user);
                     }
+                    break;
             }
-
-            sysInfos.add(sysInfo);
-            this.updateById(user);
-
+            sysInfo.setReaded(0);
+            if(sysInfo.getUserId()!=null){
+                sysInfos.add(sysInfo);
+            }
         });
 
         return sysInfos;

@@ -25,6 +25,7 @@ import com.qcw.parksys.vo.PayOrderVo;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -123,20 +124,27 @@ public class OrderController {
      * 测试生成付款码
      */
     @PostMapping("/test/qrCode")
+    @Transactional
     public R testPay(@RequestBody PayOrderVo payOrderVo){
 
         // 1. 设置参数（全局只需设置一次）
         Config config = AliPayConfig.getConfig();
         Factory.setOptions(config);
         AlipayTradePrecreateResponse response;
-        AlipayTradePagePayResponse pay;
 
         String fileName = "";
 
         try {
             // 2. 以创建当面付收款二维码
+            //支付宝订单号
+            String outTradeNo = UUID.randomUUID().toString().substring(0,10);
+            //设置用户订单的支付宝订单号
+            OrderEntity orderEntity = orderService.getById(payOrderVo.getOrderId());
+            orderEntity.setOutTradeNo(outTradeNo);
+            orderService.updateById(orderEntity);
+
             response = Factory.Payment.FaceToFace()
-                    .preCreate("Apple iPhone11 128G", "100011", "5799.00");
+                    .preCreate("Apple iPhone11 128G", outTradeNo,"11.00");
 
             //pay = Factory.Payment.Page().pay("Apple iPhone11 128G", "5799.00", "5799.00", config.notifyUrl);
             // 3. 处理响应或异常
@@ -191,7 +199,10 @@ public class OrderController {
         Factory.setOptions(config);
         AlipayTradeQueryResponse response;
 
-        response = Factory.Payment.Common().query("100011");
+        //查询出订单的支付宝订单号,调用支付宝接口查询订单是否支付
+        Integer orderId = (Integer) params.get("orderId");
+        OrderEntity orderEntity = orderService.getById(orderId);
+        response = Factory.Payment.Common().query(orderEntity.getOutTradeNo());
         //支付宝交易成功,订单状态改变
         R payResult = R.error().put("msg","您还未支付");
         if("10000".equals(response.code)){
