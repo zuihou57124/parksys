@@ -154,7 +154,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
         //应付总额
         Integer total = type.getPrice() * duration;
         //实付总额(打折等优惠)
-        Integer realPay = Math.toIntExact(Math.round((double) total * vip.getDiscount()));
+        //Integer realPay = Math.toIntExact(Math.round((double) total * vip.getDiscount()));
+
+        Integer realPay = total;
 
         //用户余额是否足够
         if (user.getMoney() < total) {
@@ -228,13 +230,13 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
                 long timestamp = new Date().getTime() - item.getCreateTime().getTime();
                 System.out.println("预约即将失效间隔:  " + timestamp / 1000);
                 //计算预约时间和当前时间的时间差
-                if (timestamp / 1000 >= 200 && timestamp / 1000 <= 300) {
+                if (timestamp / 1000 >= 180 && timestamp / 1000 <= 300) {
                     sysInfo = new SysInfoEntity();
                     sysInfo.setCreateTime(new Date());
                     sysInfo.setUserId(item.getUserId());
                     PositionEntity position = positionService.getById(space.getPositionId());
                     TypeEntity type = typeService.getById(space.getTypeId());
-                    String info = "尊敬的用户,您预约的 " + position.getPositionName() + " 的" + type.getTypeName() + " 的预约即将在100秒内失效," + "请尽快前往支付";
+                    String info = "尊敬的用户,您预约的 " + position.getPositionName() + " 的" + type.getTypeName() + " 的预约即将在2分钟内失效," + "请尽快前往支付";
                     sysInfo.setInfo(info);
                     sysInfo.setTitle("预约即将失效的通知");
                     //消息实体封装好后, readed 初始值为 0 ,即未读

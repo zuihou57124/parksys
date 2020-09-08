@@ -144,7 +144,7 @@ public class OrderController {
             orderService.updateById(orderEntity);
 
             response = Factory.Payment.FaceToFace()
-                    .preCreate("Apple iPhone11 128G", outTradeNo,"11.00");
+                    .preCreate(payOrderVo.getSubuject(), outTradeNo,payOrderVo.getTotal().toString());
 
             //pay = Factory.Payment.Page().pay("Apple iPhone11 128G", "5799.00", "5799.00", config.notifyUrl);
             // 3. 处理响应或异常
@@ -232,10 +232,6 @@ public class OrderController {
             return R.error().put("msg","订单已失效,请重新下单");
         }
 
-        //token校验成功,立即删除redis中的token
-        redisTemplate.delete("user:" + userId.toString() + "submitToken:");
-
-
         Integer info = orderService.pay(params);
 
         if (info.equals(MyConst.PaySatus.VALID.getCode())) {
@@ -244,6 +240,9 @@ public class OrderController {
         if (info.equals(MyConst.PaySatus.NOMONEY.getCode())) {
             return R.error(info, MyConst.PaySatus.NOMONEY.getMsg());
         }
+
+        //订单成功关闭后，删除token
+        redisTemplate.delete("user:" + userId.toString() + "submitToken:");
 
         return R.ok();
     }
