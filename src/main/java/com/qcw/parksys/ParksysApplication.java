@@ -3,6 +3,7 @@ package com.qcw.parksys;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.servlet.ServletComponentScan;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
@@ -13,6 +14,8 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableScheduling
 //过滤器扫描
 //@ServletComponentScan
+//开启缓存
+@EnableCaching
 public class ParksysApplication {
 
     public static void main(String[] args) {

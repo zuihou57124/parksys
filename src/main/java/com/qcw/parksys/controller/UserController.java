@@ -212,6 +212,22 @@ public class UserController {
         return R.ok().put("data",sysInfos);
     }
 
+
+    /**
+     * @param params
+     * @return
+     * 用户信息
+     */
+    @PostMapping("/personal")
+    public R personal(@RequestBody Map<String,Integer> params){
+
+        Integer id = params.get("userId");
+
+        UserEntity user = userService.getById(id);
+
+        return R.ok().put("user",user);
+    }
+
     /**
      * 获取用户地理位置
      * 通过ip获得=>如果用户使用代理,可能不正确,精确到区县

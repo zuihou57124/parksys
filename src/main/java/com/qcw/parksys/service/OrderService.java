@@ -47,5 +47,7 @@ public interface OrderService extends IService<OrderEntity> {
      * 退款
      */
     Integer backMoney(BackMoneyVo backMoneyVo);
+
+    String hasQrCode(Integer orderId);
 }
 

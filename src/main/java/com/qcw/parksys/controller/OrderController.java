@@ -127,19 +127,25 @@ public class OrderController {
     @Transactional
     public R testPay(@RequestBody PayOrderVo payOrderVo){
 
+        //生成二维码之前判断 是否重复生成二维码(即之前已经生成过，但未支付)
+        String qrCode = orderService.hasQrCode(payOrderVo.getOrderId());
+
+        if(!StringUtils.isEmpty(qrCode)){
+            return R.ok().put("fileName",qrCode);
+        }
+
         // 1. 设置参数（全局只需设置一次）
         Config config = AliPayConfig.getConfig();
         Factory.setOptions(config);
         AlipayTradePrecreateResponse response;
 
         String fileName = "";
-
+        OrderEntity orderEntity = orderService.getById(payOrderVo.getOrderId());
         try {
             // 2. 以创建当面付收款二维码
             //支付宝订单号
             String outTradeNo = UUID.randomUUID().toString().substring(0,10);
             //设置用户订单的支付宝订单号
-            OrderEntity orderEntity = orderService.getById(payOrderVo.getOrderId());
             orderEntity.setOutTradeNo(outTradeNo);
             orderService.updateById(orderEntity);
 
@@ -180,6 +186,13 @@ public class OrderController {
 
             outputStream1.flush();
             outputStream1.close();
+
+            //二维码生成成功后，将图片地址保存在订单信息中
+            if(!StringUtils.isEmpty(fileName)){
+                orderEntity.setQrCodeUrl(fileName);
+                orderService.updateById(orderEntity);
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
         }

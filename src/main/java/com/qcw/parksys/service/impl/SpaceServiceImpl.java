@@ -6,6 +6,7 @@ import com.qcw.parksys.service.*;
 import com.qcw.parksys.vo.BookParkVo;
 import com.qcw.parksys.vo.SpaceVo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -54,6 +55,7 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceDao, SpaceEntity> impleme
      * 获取车位列表（默认所有,可以按条件查询）
      */
     @Override
+    @Cacheable(value = "spaceList",key = "'spaceList:page:'+#params.get('page')")
     public PageUtils getSpaceList(Map<String, Object> params) {
 
         QueryWrapper<SpaceEntity> wrapper = new QueryWrapper<>();
@@ -172,6 +174,8 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceDao, SpaceEntity> impleme
         if(vip!=null){
             //orderEntity.setTotalReal((int) (totalMoney*((double)vip.getDiscount()/10)));
         }
+
+        orderEntity.setQrCodeUrl("");
 
         orderService.save(orderEntity);
 

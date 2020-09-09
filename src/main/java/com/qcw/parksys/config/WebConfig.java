@@ -1,23 +1,35 @@
 package com.qcw.parksys.config;
 
 
+import com.alibaba.fastjson.support.spring.FastJsonHttpMessageConverter;
+import com.fasterxml.jackson.core.json.UTF8JsonGenerator;
+import org.bouncycastle.util.encoders.UTF8;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import java.util.List;
+
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
     @Autowired
     MyIntercepter myIntercepter;
+
+
+    @Override
+    public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
+
+    }
 
     @Bean
     public FilterRegistrationBean filterRegistrationBean() {

@@ -9,8 +9,10 @@
 package com.qcw.parksys.common.utils;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -18,6 +20,7 @@ import java.util.List;
  *
  * @author Mark sunlightcs@gmail.com
  */
+@JsonDeserialize
 public class PageUtils implements Serializable {
 	private static final long serialVersionUID = 1L;
 	/**
@@ -40,7 +43,11 @@ public class PageUtils implements Serializable {
 	 * 列表数据
 	 */
 	private List<?> list;
-	
+
+	public PageUtils(){
+
+	}
+
 	/**
 	 * 分页
 	 * @param list        列表数据

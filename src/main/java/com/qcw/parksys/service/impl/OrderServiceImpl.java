@@ -21,6 +21,7 @@ import com.qcw.parksys.common.utils.Query;
 
 import com.qcw.parksys.dao.OrderDao;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 
 @Service("orderService")
@@ -172,6 +173,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
         order.setTotalReal(realPay);
         order.setValidStatus(3);
         order.setDuration(duration);
+        order.setQrCodeUrl("");
         //设置支付时间
         order.setPayTime(new Date());
 
@@ -490,6 +492,13 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
         userService.updateById(user);
 
         return MyConst.BackMoneyEnum.SUCCESS.getCode();
+    }
+
+    @Override
+    public String hasQrCode(Integer orderId) {
+
+        OrderEntity order = this.getById(orderId);
+        return order.getQrCodeUrl();
     }
 
 

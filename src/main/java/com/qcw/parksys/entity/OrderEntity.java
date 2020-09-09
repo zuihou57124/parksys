@@ -77,4 +77,10 @@ public class OrderEntity implements Serializable {
 	 */
 	private Integer validStatus;
 
+	/**
+	 * 支付宝二维码
+	 */
+	private String qrCodeUrl;
+
+
 }

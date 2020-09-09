@@ -9,10 +9,7 @@ import com.qcw.parksys.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -47,9 +44,9 @@ public class OSSController {
      * @return
      * 用户从前台上传头像，然后上传到阿里云 oss
      */
-    @RequestMapping("/upload")
+    @PostMapping("/upload")
     @ResponseBody
-    public R uploadImg(@RequestBody Integer userId,@RequestBody MultipartFile file) throws IOException {
+    public R uploadImg(Integer userId,MultipartFile file) throws IOException {
 
         String key = "parksys/userhead/"+file.getOriginalFilename();
 

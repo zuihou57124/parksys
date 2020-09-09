@@ -37,6 +37,10 @@ spring:
   jackson:
     date-format: yyyy-MM-dd HH:mm
     time-zone: GMT+8
+
+  #redis缓存
+  cache:
+    type: redis
 #      initial-size: 10
 #      max-active: 100
 #      min-idle: 10

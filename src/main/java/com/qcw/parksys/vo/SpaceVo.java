@@ -3,13 +3,14 @@ package com.qcw.parksys.vo;
 
 import lombok.Data;
 
+import java.io.Serializable;
 import java.util.Date;
 
 /**
  * 车位 vo
  */
 @Data
-public class SpaceVo {
+public class SpaceVo implements Serializable {
 
 
     private Integer id;
