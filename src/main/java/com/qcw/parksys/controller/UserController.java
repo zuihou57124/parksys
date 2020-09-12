@@ -255,6 +255,19 @@ public class UserController {
     }
 
     /**
+     * 更换头像地址
+     */
+    @PostMapping("/changeHeadUrl")
+    public R changeHeadUrl(@RequestBody Map<String,Object> params){
+
+        UserEntity user = userService.changeHeadUrl(params);
+        if(user!=null){
+            return R.ok().put("user", user);
+        }
+        return R.error().put("msg","更换失败,请重试");
+    }
+
+    /**
      * 信息
      */
     @RequestMapping("/info/{id}")

@@ -501,5 +501,147 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
         return order.getQrCodeUrl();
     }
 
+    /**
+     * @param order
+     * 队列版--关闭订单
+     */
+    @Override
+    @Transactional
+    public void closeOrder(OrderEntity order) {
+
+        order = this.getById(order.getId());
+        //重新查询数据库，检查用户订单状态是否已经改变
+        if(!order.getStatus().equals(MyConst.OrderStatus.CREATED.getCode())){
+            return ;
+        }
+        order.setStatus(MyConst.OrderStatus.TOKEN.getCode());
+        //设置订单为已经过期
+        order.setValidStatus(1);
+        Integer spaceId = order.getSpaceId();
+        SpaceEntity space = spaceService.getOne(new QueryWrapper<SpaceEntity>().eq("id", spaceId));
+        space.setStatus(MyConst.SpaceStatus.AVALIABLE.getCode());
+        space.setNextTime(null);
+
+        spaceService.updateById(space);
+        this.updateById(order);
+
+    }
+
+    /**
+     * @param order
+     * @return
+     * 队列版 -- 获取即将到期的订单
+     */
+    @Override
+    @Transactional
+    public SysInfoEntity willValidOrderToSysInfo(OrderEntity order) {
+
+        order = this.getById(order.getId());
+        //重新查询数据库，检查订单状态
+        if(order.getStatus().equals(MyConst.OrderStatus.CREATED.getCode())){
+            //预约即将到期
+            SysInfoEntity sysInfo = new SysInfoEntity();
+            SpaceEntity space = spaceService.getById(order.getSpaceId());
+            sysInfo.setCreateTime(new Date());
+            sysInfo.setUserId(order.getUserId());
+            PositionEntity position = positionService.getById(space.getPositionId());
+            TypeEntity type = typeService.getById(space.getTypeId());
+            String info = "尊敬的用户,您预约的 " + position.getPositionName() + " 的" + type.getTypeName() + " 的预约即将在2分钟内失效," + "请尽快前往支付";
+            sysInfo.setInfo(info);
+            sysInfo.setTitle("预约即将失效的通知");
+            //消息实体封装好后, readed 初始值为 0 ,即未读
+            sysInfo.setReaded(0);
+
+            //设置订单即将过期,下次定时任务可以不用扫描
+            order.setValidStatus(0);
+            this.updateById(order);
+            System.out.println("预约即将失效啦");
+
+            return sysInfo;
+        }
+
+        if(order.getStatus().equals(MyConst.OrderStatus.DONE.getCode())){
+            //车位即将到期
+            SysInfoEntity sysInfo = new SysInfoEntity();
+            SpaceEntity space = spaceService.getById(order.getSpaceId());
+            sysInfo.setCreateTime(new Date());
+            sysInfo.setUserId(order.getUserId());
+            PositionEntity position = positionService.getById(space.getPositionId());
+            TypeEntity type = typeService.getById(space.getTypeId());
+            String info = "尊敬的用户,您租借的 " + position.getPositionName() + " 的" + type.getTypeName() + " 的车位即将在10分钟内到期," + "请尽快前往续费";
+            sysInfo.setInfo(info);
+            sysInfo.setTitle("车位即将到期的通知");
+            //消息实体封装好后, readed 初始值为 0 ,即未读
+            sysInfo.setReaded(0);
+
+            //设置订单即将过期,下次定时任务可以不用扫描，减少开销
+            order.setValidStatus(0);
+            this.updateById(order);
+            System.out.println("车位即将到期啦");
+
+            return sysInfo;
+        }
+
+        return null;
+    }
+
+
+    /**
+     * @param order
+     * @return
+     * 队列版 -- 获取已经到期的订单
+     */
+    @Override
+    @Transactional
+    public SysInfoEntity validOrderToSysInfo(OrderEntity order) {
+
+        order = this.getById(order.getId());
+        //重新查询数据库，检查订单状态
+        if(order.getStatus().equals(MyConst.OrderStatus.CREATED.getCode())){
+            //预约到期
+            SysInfoEntity sysInfo = new SysInfoEntity();
+            SpaceEntity space = spaceService.getById(order.getSpaceId());
+            sysInfo.setCreateTime(new Date());
+            sysInfo.setUserId(order.getUserId());
+            PositionEntity position = positionService.getById(space.getPositionId());
+            TypeEntity type = typeService.getById(space.getTypeId());
+            String info = "尊敬的用户,您预约的 " + position.getPositionName() + " 的" + type.getTypeName() + " 的预约已经失效";
+            sysInfo.setInfo(info);
+            sysInfo.setTitle("预约失效的通知");
+            //消息实体封装好后, readed 初始值为 0 ,即未读
+            sysInfo.setReaded(0);
+
+            //设置订单即将过期,下次定时任务可以不用扫描
+            order.setValidStatus(0);
+            this.updateById(order);
+            System.out.println("预约失效啦");
+
+            return sysInfo;
+        }
+
+        if(order.getStatus().equals(MyConst.OrderStatus.DONE.getCode())){
+            //车位到期
+            SysInfoEntity sysInfo = new SysInfoEntity();
+            SpaceEntity space = spaceService.getById(order.getSpaceId());
+            sysInfo.setCreateTime(new Date());
+            sysInfo.setUserId(order.getUserId());
+            PositionEntity position = positionService.getById(space.getPositionId());
+            TypeEntity type = typeService.getById(space.getTypeId());
+            String info = "尊敬的用户,您租借的 " + position.getPositionName() + " 的" + type.getTypeName() + " 的车位已经到期";
+            sysInfo.setInfo(info);
+            sysInfo.setTitle("车位到期的通知");
+            //消息实体封装好后, readed 初始值为 0 ,即未读
+            sysInfo.setReaded(0);
+
+            //设置订单即将过期,下次定时任务可以不用扫描，减少开销
+            order.setValidStatus(0);
+            this.updateById(order);
+            System.out.println("车位即将到期啦");
+
+            return sysInfo;
+        }
+
+        return null;
+    }
 
 }

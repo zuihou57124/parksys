@@ -3,6 +3,23 @@ server:
   port: 8088
 
 spring:
+
+  #rabbitmq
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+
+    publisher-returns: true
+    publisher-confirms: true
+    template:
+      mandatory: true
+    #消费端默认自动确认，收到消息后，发送端会删除消息
+    #需要手动ack
+    listener:
+      simple:
+        acknowledge-mode: manual
+
+
   #邮箱配置
   mail:
     host: smtp.qq.com             #邮箱服务器地址
@@ -41,6 +58,8 @@ spring:
   #redis缓存
   cache:
     type: redis
+    redis:
+      time-to-live: 600000
 #      initial-size: 10
 #      max-active: 100
 #      min-idle: 10

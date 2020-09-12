@@ -5,7 +5,10 @@ import com.qcw.parksys.entity.*;
 import com.qcw.parksys.service.*;
 import com.qcw.parksys.vo.BookParkVo;
 import com.qcw.parksys.vo.SpaceVo;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
@@ -40,6 +43,9 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceDao, SpaceEntity> impleme
 
     @Autowired
     OrderService orderService;
+
+    @Autowired
+    RabbitTemplate rabbitTemplate;
 
     @Override
     public PageUtils queryPage(Map<String, Object> params) {
@@ -132,6 +138,7 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceDao, SpaceEntity> impleme
      */
     @Override
     @Transactional
+    @CacheEvict(value = "spaceList",allEntries = true)
     public Boolean bookPark(BookParkVo bookParkVo) {
 
         if(bookParkVo.getUserId()==null){
@@ -178,6 +185,16 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceDao, SpaceEntity> impleme
         orderEntity.setQrCodeUrl("");
 
         orderService.save(orderEntity);
+        //发送消息到rabbitmq
+        rabbitTemplate.convertAndSend(
+                "order-event-exchange","order.create.event",orderEntity
+                ,message -> {
+                        //5分钟后过期
+                        message.getMessageProperties().setExpiration(String.valueOf(60000*5));
+                        return message;
+                    }
+                );
+
 
         return this.updateById(space);
     }

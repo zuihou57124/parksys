@@ -28,6 +28,7 @@ import com.qcw.parksys.common.utils.Query;
 import com.qcw.parksys.dao.UserDao;
 import com.qcw.parksys.entity.UserEntity;
 import com.qcw.parksys.service.UserService;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
@@ -172,6 +173,23 @@ public class UserServiceImpl extends ServiceImpl<UserDao, UserEntity> implements
         });
 
         return sysInfos;
+    }
+
+    @Override
+    @Transactional
+    public UserEntity changeHeadUrl(Map<String, Object> params) {
+
+        Integer userId = (Integer) params.get("userId");
+        String headImg = (String) params.get("headImg");
+
+        UserEntity user = this.getById(userId);
+        user.setHeadImg(headImg);
+        boolean b = this.updateById(user);
+        if(b){
+            return user;
+        }
+
+        return null;
     }
 
 }

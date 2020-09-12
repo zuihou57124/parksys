@@ -28,5 +28,7 @@ public interface UserService extends IService<UserEntity> {
     GeoPosition getCurrPostionByIp(String ip);
 
     List<SysInfoEntity> updateUserInfo();
+
+    UserEntity changeHeadUrl(Map<String, Object> params);
 }
 

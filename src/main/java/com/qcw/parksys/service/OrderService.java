@@ -49,5 +49,11 @@ public interface OrderService extends IService<OrderEntity> {
     Integer backMoney(BackMoneyVo backMoneyVo);
 
     String hasQrCode(Integer orderId);
+
+    void closeOrder(OrderEntity order);
+
+    SysInfoEntity willValidOrderToSysInfo(OrderEntity order);
+
+    SysInfoEntity validOrderToSysInfo(OrderEntity order);
 }
 
