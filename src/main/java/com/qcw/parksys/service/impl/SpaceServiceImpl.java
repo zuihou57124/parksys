@@ -45,6 +45,9 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceDao, SpaceEntity> impleme
     OrderService orderService;
 
     @Autowired
+    GeoPositionService geoPositionService;
+
+    @Autowired
     RabbitTemplate rabbitTemplate;
 
     @Override
@@ -112,8 +115,16 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceDao, SpaceEntity> impleme
                     SpaceVo spaceVo = new SpaceVo();
                     spaceVo.setId(item.getId());
 
+                    //获取地点信息
                     PositionEntity position = positionService.getOne(new QueryWrapper<PositionEntity>()
                             .eq("id", item.getPositionId()));
+
+                    //获取 省市区 信息
+                    GeoPosition geo = geoPositionService.getById(position.getGeoId());
+                    spaceVo.setProvince(geo.getPro());
+                    spaceVo.setCity(geo.getCity());
+                    spaceVo.setRegion(geo.getRegion());
+
                     spaceVo.setPosition(position.getPositionName());
                     TypeEntity typeEntity = typeService.getOne(new QueryWrapper<TypeEntity>()
                             .eq("id", item.getTypeId()));
@@ -185,7 +196,7 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceDao, SpaceEntity> impleme
         orderEntity.setQrCodeUrl("");
 
         orderService.save(orderEntity);
-        //发送消息到rabbitmq
+        //订单自动关闭--rabbit
         rabbitTemplate.convertAndSend(
                 "order-event-exchange","order.create.event",orderEntity
                 ,message -> {
@@ -194,6 +205,26 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceDao, SpaceEntity> impleme
                         return message;
                     }
                 );
+
+        //预约即将到期--rabbit
+        rabbitTemplate.convertAndSend(
+                "order-event-exchange","order.createwillvaliddelay.event",orderEntity
+                ,message -> {
+                    //3分钟后过期
+                    message.getMessageProperties().setExpiration(String.valueOf(60000*3));
+                    return message;
+                }
+        );
+
+        //预约已经到期--rabbit
+        rabbitTemplate.convertAndSend(
+                "order-event-exchange","order.createvaliddelay.event",orderEntity
+                ,message -> {
+                    //5分钟后过期
+                    message.getMessageProperties().setExpiration(String.valueOf(60000*5-2000));
+                    return message;
+                }
+        );
 
 
         return this.updateById(space);

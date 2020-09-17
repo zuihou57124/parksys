@@ -127,10 +127,21 @@ public class OrderController {
     @Transactional
     public R testPay(@RequestBody PayOrderVo payOrderVo){
 
+        OrderEntity orderEntity = orderService.getById(payOrderVo.getOrderId());
+
+        if(orderEntity==null){
+            return R.error().put("msg","订单不存在!");
+        }
+
+        //检查订单状态
+        if(!orderEntity.getStatus().equals(MyConst.OrderStatus.CREATED.getCode())){
+            return R.error().put("msg","订单已取消或者已过期!");
+        }
+
         //生成二维码之前判断 是否重复生成二维码(即之前已经生成过，但未支付)
         String qrCode = orderService.hasQrCode(payOrderVo.getOrderId());
 
-        if(!StringUtils.isEmpty(qrCode)){
+        if(!StringUtils.isEmpty(qrCode) && !payOrderVo.getChanged()){
             return R.ok().put("fileName",qrCode);
         }
 
@@ -140,7 +151,6 @@ public class OrderController {
         AlipayTradePrecreateResponse response;
 
         String fileName = "";
-        OrderEntity orderEntity = orderService.getById(payOrderVo.getOrderId());
         try {
             // 2. 以创建当面付收款二维码
             //支付宝订单号
@@ -296,10 +306,13 @@ public class OrderController {
     /**
      * 删除
      */
-    @RequestMapping("/delete")
-    @RequiresPermissions("parksys:order:delete")
-    public R delete(@RequestBody Integer[] ids) {
-        orderService.removeByIds(Arrays.asList(ids));
+    @PostMapping("/delOrder")
+    public R delete(@RequestBody Map<String,Integer> params) {
+        boolean b = orderService.delOrder(params);
+
+        if(!b){
+            return R.error().put("msg","删除失败,请重试");
+        }
 
         return R.ok();
     }

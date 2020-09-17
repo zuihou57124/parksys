@@ -4,7 +4,6 @@ import com.qcw.parksys.common.myconst.MyConst;
 import com.qcw.parksys.entity.*;
 import com.qcw.parksys.service.*;
 import com.qcw.parksys.vo.BackMoneyVo;
-import com.qcw.parksys.vo.SysInfoVo;
 import com.qcw.parksys.vo.UserBooksVo;
 import com.qcw.parksys.vo.UserOrderVo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +20,6 @@ import com.qcw.parksys.common.utils.Query;
 
 import com.qcw.parksys.dao.OrderDao;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 
 @Service("orderService")
@@ -154,17 +152,18 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
         Integer duration = (Integer) params.get("duration");
         //应付总额
         Integer total = type.getPrice() * duration;
-        //实付总额(打折等优惠)
-        //Integer realPay = Math.toIntExact(Math.round((double) total * vip.getDiscount()));
-
         Integer realPay = total;
+        //实付总额(打折等优惠)
+        if(vip!=null){
+            realPay = Math.toIntExact(Math.round((double) total * vip.getDiscount()));
+        }
 
         //用户余额是否足够
-        if (user.getMoney() < total) {
+        if (user.getMoney() < realPay) {
             return 50002;
         }
         //扣除用户余额和更新用户累计花费
-        user.setMoney(user.getMoney() - total);
+        user.setMoney(user.getMoney() - realPay);
         user.setTotalCost(user.getTotalCost() + realPay);
 
         //修改订单信息
@@ -642,6 +641,15 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
         }
 
         return null;
+    }
+
+    @Override
+    public boolean delOrder(Map<String, Integer> params) {
+
+        Integer id = params.get("orderId");
+
+        return this.removeById(id);
+
     }
 
 }

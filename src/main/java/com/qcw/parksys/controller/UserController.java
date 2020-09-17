@@ -212,6 +212,16 @@ public class UserController {
         return R.ok().put("data",sysInfos);
     }
 
+    /**
+     * 修改密码
+     */
+    @PostMapping("/updatePsd")
+    public R updatePsd(@RequestBody Map<String,Object> params){
+
+        List<SysInfoEntity> sysInfos = userService.getSysInfos(params);
+
+        return R.ok().put("data",sysInfos);
+    }
 
     /**
      * @param params

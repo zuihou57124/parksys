@@ -16,7 +16,17 @@ public class SpaceVo implements Serializable {
     private Integer id;
 
     /**
-     * 车位所在地区
+     * 车位所在省市区
+     */
+    private String province;
+
+    private String city;
+
+    private String region;
+
+
+    /**
+     * 车位所在地点(详细)
      */
     private String position;
 

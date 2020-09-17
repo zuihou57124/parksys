@@ -15,4 +15,6 @@ public class PayOrderVo {
 
     Integer orderId;
 
+    Boolean changed = false;
+
 }

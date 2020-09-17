@@ -83,7 +83,7 @@ public class OrderCloseListener {
         System.out.println("收到即将到期的消息...");
 
         try {
-            SysInfoEntity sysInfo = orderService.willValidOrderToSysInfo(order);
+            SysInfoEntity sysInfo = orderService.validOrderToSysInfo(order);
             sysInfoService.save(sysInfo);
             System.out.println(order);
             channel.basicAck(message.getMessageProperties().getDeliveryTag(),false);

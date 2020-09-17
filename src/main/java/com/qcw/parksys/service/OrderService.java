@@ -55,5 +55,7 @@ public interface OrderService extends IService<OrderEntity> {
     SysInfoEntity willValidOrderToSysInfo(OrderEntity order);
 
     SysInfoEntity validOrderToSysInfo(OrderEntity order);
+
+    boolean delOrder(Map<String, Integer> params);
 }
 
