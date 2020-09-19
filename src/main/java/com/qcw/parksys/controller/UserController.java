@@ -300,23 +300,30 @@ public class UserController {
     }
 
     /**
-     * 修改
+     * 修改密码
      */
-    @RequestMapping("/update")
-    @RequiresPermissions("parksys:user:update")
-    public R update(@RequestBody UserEntity user){
-		userService.updateById(user);
+    @RequestMapping("/updatepsd")
+    public R update(@RequestBody Map<String,String> params){
+        int flag = userService.updatepsd(params);
 
-        return R.ok();
-    }
+        switch (flag) {
+            case 1:{
+                return R.error().put("msg","请输入新密码");
+            }
+            case 2:{
+                return R.error().put("msg","请输入旧密码");
+            }
+            case 3:{
+                return R.error().put("msg","新密码长度至少为6位");
+            }
+            case 4:{
+                return R.error().put("msg","旧密码不匹配");
+            }
+            case 5:{
+                return R.error().put("msg","新密码不能与旧密码相同");
+            }
 
-    /**
-     * 删除
-     */
-    @RequestMapping("/delete")
-    @RequiresPermissions("parksys:user:delete")
-    public R delete(@RequestBody Integer[] ids){
-		userService.removeByIds(Arrays.asList(ids));
+        }
 
         return R.ok();
     }

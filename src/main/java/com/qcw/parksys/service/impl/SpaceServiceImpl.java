@@ -64,7 +64,7 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceDao, SpaceEntity> impleme
      * 获取车位列表（默认所有,可以按条件查询）
      */
     @Override
-    @Cacheable(value = "spaceList",key = "'spaceList:page:'+#params.get('page')")
+    //@Cacheable(value = "spaceList",key = "'spaceList:page:'+#params.get('page')")
     public PageUtils getSpaceList(Map<String, Object> params) {
 
         QueryWrapper<SpaceEntity> wrapper = new QueryWrapper<>();
@@ -72,6 +72,42 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceDao, SpaceEntity> impleme
         String type_name = (String) params.get("type");
         Integer price = (Integer) params.get("price");
         String status = (String) params.get("status");
+
+        //省市区筛选
+        String pro = (String) params.get("pro");
+        String city = (String) params.get("city");
+        String region = (String) params.get("region");
+
+        //参数是否携带省市区信息
+        if(!StringUtils.isEmpty(pro)){
+
+            QueryWrapper<GeoPosition> wr = new QueryWrapper<>();
+            wr.eq("pro",pro);
+
+            if(!StringUtils.isEmpty(city)){
+                wr.eq("city",city);
+
+            }if(!StringUtils.isEmpty(region)){
+                wr.eq("region",region);
+            }
+
+            List<Integer> geoids = geoPositionService.list(wr
+                    )
+                    .stream()
+                    .map(GeoPosition::getId).collect(Collectors.toList());
+
+            if(geoids.size()==0){
+
+                return null;
+            }
+
+            List<PositionEntity> positions = positionService.list(new QueryWrapper<PositionEntity>()
+                    .in("geo_id", geoids));
+
+            List<Integer> ids = positions.stream().map(PositionEntity::getId).collect(Collectors.toList());
+
+            wrapper.in("position_id",ids);
+        }
 
         //参数是否携带车位地区信息
         if(!StringUtils.isEmpty(position_name)){

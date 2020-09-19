@@ -1,6 +1,11 @@
 
 server:
   port: 8088
+  servlet:
+    session:
+      cookie:
+        name: parksys-session-id
+      timeout: 60m
 
 spring:
 

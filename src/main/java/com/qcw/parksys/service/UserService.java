@@ -30,5 +30,7 @@ public interface UserService extends IService<UserEntity> {
     List<SysInfoEntity> updateUserInfo();
 
     UserEntity changeHeadUrl(Map<String, Object> params);
+
+    int updatepsd(Map<String, String> params);
 }
 

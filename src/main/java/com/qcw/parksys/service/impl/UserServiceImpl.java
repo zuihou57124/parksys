@@ -192,4 +192,50 @@ public class UserServiceImpl extends ServiceImpl<UserDao, UserEntity> implements
         return null;
     }
 
+    /**
+     * @param params
+     * @return
+     * 修改密码
+     */
+    @Override
+    @Transactional
+    public int updatepsd(Map<String, String> params) {
+
+        String userId = params.get("userId");
+        String originPsd = params.get("originPsd");
+        String newPsd = params.get("newPsd");
+
+        UserEntity user = this.getById(Integer.valueOf(userId));
+
+        if(StringUtils.isEmpty(newPsd)){
+            //请输入新密码
+            return 1;
+        }
+        if(StringUtils.isEmpty(originPsd)){
+            //请输入旧密码
+            return 2;
+        }
+
+        if(newPsd.length()<6){
+            //新密码长度至少为6位
+            return 3;
+        }
+
+        if(!user.getPassword().equals(originPsd)){
+            //旧密码不匹配
+            return 4;
+        }
+
+        if(newPsd.equals(user.getPassword())){
+            //新密码不能与旧密码相同
+            return 5;
+        }
+
+        //修改密码
+        user.setPassword(newPsd);
+        this.updateById(user);
+
+        return 0;
+    }
+
 }
