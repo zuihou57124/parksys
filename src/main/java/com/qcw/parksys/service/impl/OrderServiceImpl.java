@@ -1,11 +1,18 @@
 package com.qcw.parksys.service.impl;
 
+import com.alipay.easysdk.factory.Factory;
+import com.alipay.easysdk.kernel.Config;
+import com.alipay.easysdk.payment.common.models.AlipayTradeQueryResponse;
+import com.alipay.easysdk.payment.common.models.AlipayTradeRefundResponse;
 import com.qcw.parksys.common.myconst.MyConst;
+import com.qcw.parksys.common.utils.R;
+import com.qcw.parksys.config.AliPayConfig;
 import com.qcw.parksys.entity.*;
 import com.qcw.parksys.service.*;
 import com.qcw.parksys.vo.BackMoneyVo;
 import com.qcw.parksys.vo.UserBooksVo;
 import com.qcw.parksys.vo.UserOrderVo;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -39,6 +46,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
 
     @Autowired
     SpaceService spaceService;
+
+    @Autowired
+    RabbitTemplate rabbitTemplate;
 
 
     @Override
@@ -151,10 +161,10 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
         //时长
         Integer duration = (Integer) params.get("duration");
         //应付总额
-        Integer total = type.getPrice() * duration;
-        Integer realPay = total;
+        float total = type.getPrice() * duration;
+        float realPay = total;
         //实付总额(打折等优惠)
-        if(vip!=null){
+        if (vip != null) {
             realPay = Math.toIntExact(Math.round((double) total * vip.getDiscount()));
         }
 
@@ -188,6 +198,26 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
         userService.updateById(user);
         spaceService.updateById(space);
         this.updateById(order);
+
+        //车位即将到期--rabbit
+        rabbitTemplate.convertAndSend(
+                "order-event-exchange", "order.createwillvaliddelay.event", order
+                , message -> {
+                    //过期
+                    message.getMessageProperties().setExpiration(String.valueOf(1000 * 60 * 60 * (duration - 1)));
+                    return message;
+                }
+        );
+
+        //车位已经到期--rabbit
+        rabbitTemplate.convertAndSend(
+                "order-event-exchange", "order.createvaliddelay.event", order
+                , message -> {
+                    //过期
+                    message.getMessageProperties().setExpiration(String.valueOf(1000 * 60 * 60 * duration));
+                    return message;
+                }
+        );
 
         return 50001;
     }
@@ -224,7 +254,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
         //this.updateBatchById(orderList);
 
         List<SysInfoEntity> sysInfoVos = orderList.stream().map((item) -> {
-            SysInfoEntity sysInfo =  null;
+            SysInfoEntity sysInfo = null;
             SpaceEntity space = spaceService.getById(item.getSpaceId());
             //预约即将失效时
             if (item.getStatus().equals(MyConst.OrderStatus.CREATED.getCode())) {
@@ -389,7 +419,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
             SpaceEntity space = spaceService.getById(item.getSpaceId());
             //预约已经失效
             if (item.getStatus().equals(MyConst.OrderStatus.CREATED.getCode())) {
-                long timestamp = (item.getCreateTime().getTime()+1000*60*5) - new Date().getTime();
+                long timestamp = (item.getCreateTime().getTime() + 1000 * 60 * 5) - new Date().getTime();
                 System.out.println("预约已经失效间隔:  " + timestamp / 1000);
                 //计算到期时间和当前时间的时间差
                 if (timestamp <= 0) {
@@ -454,8 +484,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
 
     /**
      * @param backMoneyVo
-     * @return
-     * 退款
+     * @return 退款
      */
     @Override
     @Transactional
@@ -476,6 +505,22 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
         timestamp = (int) (timestamp / 1000 / 3600);
         float restTime = (float) timestamp / order.getDuration();
         Integer backMoney = (int) (restTime * 0.9 * order.getTotalReal());
+
+        // 1. 设置参数（全局只需设置一次）
+        Config config = AliPayConfig.getConfig();
+        Factory.setOptions(config);
+        AlipayTradeRefundResponse response;
+
+        //支付宝退款
+
+        try {
+            response = Factory.Payment.Common().refund(order.getOutTradeNo(), backMoney.toString());
+            System.out.println(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
         //退款和扣除积分
         user.setMoney(user.getMoney() + backMoney);
         user.setIntegral(user.getIntegral() - backMoney);
@@ -501,8 +546,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
     }
 
     /**
-     * @param order
-     * 队列版--关闭订单
+     * @param order 队列版--关闭订单
      */
     @Override
     @Transactional
@@ -510,8 +554,8 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
 
         order = this.getById(order.getId());
         //重新查询数据库，检查用户订单状态是否已经改变
-        if(!order.getStatus().equals(MyConst.OrderStatus.CREATED.getCode())){
-            return ;
+        if (!order.getStatus().equals(MyConst.OrderStatus.CREATED.getCode())) {
+            return;
         }
         order.setStatus(MyConst.OrderStatus.TOKEN.getCode());
         //设置订单为已经过期
@@ -527,22 +571,28 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
     }
 
     /**
-     * @param order
-     * @return
-     * 队列版 -- 获取即将到期的订单
+     * @param orderFromMq
+     * @return 队列版 -- 获取即将到期的订单
      */
     @Override
     @Transactional
-    public SysInfoEntity willValidOrderToSysInfo(OrderEntity order) {
+    public SysInfoEntity willValidOrderToSysInfo(OrderEntity orderFromMq) {
 
-        order = this.getById(order.getId());
+
+        //加冗余字段判断  是预约还是 已完成订单
+        OrderEntity orderFromDb = this.getById(orderFromMq.getId());
+
+        if (!orderFromMq.getStatus().equals(orderFromDb.getStatus())) {
+            return null;
+        }
+
         //重新查询数据库，检查订单状态
-        if(order.getStatus().equals(MyConst.OrderStatus.CREATED.getCode())){
+        if (orderFromDb.getStatus().equals(MyConst.OrderStatus.CREATED.getCode())) {
             //预约即将到期
             SysInfoEntity sysInfo = new SysInfoEntity();
-            SpaceEntity space = spaceService.getById(order.getSpaceId());
+            SpaceEntity space = spaceService.getById(orderFromDb.getSpaceId());
             sysInfo.setCreateTime(new Date());
-            sysInfo.setUserId(order.getUserId());
+            sysInfo.setUserId(orderFromDb.getUserId());
             PositionEntity position = positionService.getById(space.getPositionId());
             TypeEntity type = typeService.getById(space.getTypeId());
             String info = "尊敬的用户,您预约的 " + position.getPositionName() + " 的" + type.getTypeName() + " 的预约即将在2分钟内失效," + "请尽快前往支付";
@@ -552,19 +602,19 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
             sysInfo.setReaded(0);
 
             //设置订单即将过期,下次定时任务可以不用扫描
-            order.setValidStatus(0);
-            this.updateById(order);
+            orderFromDb.setValidStatus(0);
+            this.updateById(orderFromDb);
             System.out.println("预约即将失效啦");
 
             return sysInfo;
         }
 
-        if(order.getStatus().equals(MyConst.OrderStatus.DONE.getCode())){
+        if (orderFromDb.getStatus().equals(MyConst.OrderStatus.DONE.getCode())) {
             //车位即将到期
             SysInfoEntity sysInfo = new SysInfoEntity();
-            SpaceEntity space = spaceService.getById(order.getSpaceId());
+            SpaceEntity space = spaceService.getById(orderFromDb.getSpaceId());
             sysInfo.setCreateTime(new Date());
-            sysInfo.setUserId(order.getUserId());
+            sysInfo.setUserId(orderFromDb.getUserId());
             PositionEntity position = positionService.getById(space.getPositionId());
             TypeEntity type = typeService.getById(space.getTypeId());
             String info = "尊敬的用户,您租借的 " + position.getPositionName() + " 的" + type.getTypeName() + " 的车位即将在10分钟内到期," + "请尽快前往续费";
@@ -574,8 +624,8 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
             sysInfo.setReaded(0);
 
             //设置订单即将过期,下次定时任务可以不用扫描，减少开销
-            order.setValidStatus(0);
-            this.updateById(order);
+            orderFromDb.setValidStatus(0);
+            this.updateById(orderFromDb);
             System.out.println("车位即将到期啦");
 
             return sysInfo;
@@ -586,22 +636,28 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
 
 
     /**
-     * @param order
-     * @return
-     * 队列版 -- 获取已经到期的订单
+     * @param orderFromMq
+     * @return 队列版 -- 获取已经到期的订单
      */
     @Override
     @Transactional
-    public SysInfoEntity validOrderToSysInfo(OrderEntity order) {
+    public SysInfoEntity validOrderToSysInfo(OrderEntity orderFromMq) {
 
-        order = this.getById(order.getId());
+
+        //加冗余字段判断  是预约还是 已完成订单
+        OrderEntity orderFromDb = this.getById(orderFromMq.getId());
+
+        if (!orderFromMq.getStatus().equals(orderFromDb.getStatus())) {
+            return null;
+        }
+
         //重新查询数据库，检查订单状态
-        if(order.getStatus().equals(MyConst.OrderStatus.CREATED.getCode())){
+        if (orderFromDb.getStatus().equals(MyConst.OrderStatus.CREATED.getCode())) {
             //预约到期
             SysInfoEntity sysInfo = new SysInfoEntity();
-            SpaceEntity space = spaceService.getById(order.getSpaceId());
+            SpaceEntity space = spaceService.getById(orderFromDb.getSpaceId());
             sysInfo.setCreateTime(new Date());
-            sysInfo.setUserId(order.getUserId());
+            sysInfo.setUserId(orderFromDb.getUserId());
             PositionEntity position = positionService.getById(space.getPositionId());
             TypeEntity type = typeService.getById(space.getTypeId());
             String info = "尊敬的用户,您预约的 " + position.getPositionName() + " 的" + type.getTypeName() + " 的预约已经失效";
@@ -611,19 +667,20 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
             sysInfo.setReaded(0);
 
             //设置订单即将过期,下次定时任务可以不用扫描
-            order.setValidStatus(0);
-            this.updateById(order);
+            orderFromDb.setValidStatus(0);
+            this.updateById(orderFromDb);
             System.out.println("预约失效啦");
 
             return sysInfo;
         }
 
-        if(order.getStatus().equals(MyConst.OrderStatus.DONE.getCode())){
+        if (orderFromDb.getStatus().equals(MyConst.OrderStatus.DONE.getCode())) {
             //车位到期
+
             SysInfoEntity sysInfo = new SysInfoEntity();
-            SpaceEntity space = spaceService.getById(order.getSpaceId());
+            SpaceEntity space = spaceService.getById(orderFromDb.getSpaceId());
             sysInfo.setCreateTime(new Date());
-            sysInfo.setUserId(order.getUserId());
+            sysInfo.setUserId(orderFromDb.getUserId());
             PositionEntity position = positionService.getById(space.getPositionId());
             TypeEntity type = typeService.getById(space.getTypeId());
             String info = "尊敬的用户,您租借的 " + position.getPositionName() + " 的" + type.getTypeName() + " 的车位已经到期";
@@ -632,10 +689,14 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
             //消息实体封装好后, readed 初始值为 0 ,即未读
             sysInfo.setReaded(0);
 
-            //设置订单即将过期,下次定时任务可以不用扫描，减少开销
-            order.setValidStatus(0);
-            this.updateById(order);
+            //设置订单已到期
+            orderFromDb.setValidStatus(1);
+            this.updateById(orderFromDb);
             System.out.println("车位即将到期啦");
+
+            //重置车位状态
+            space.setStatus(MyConst.SpaceStatus.AVALIABLE.getCode());
+            spaceService.updateById(space);
 
             return sysInfo;
         }

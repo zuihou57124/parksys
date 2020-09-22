@@ -11,7 +11,7 @@ public class PayOrderVo {
 
     String subuject;
 
-    Integer total;
+    Float total;
 
     Integer orderId;
 

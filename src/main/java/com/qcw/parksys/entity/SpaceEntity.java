@@ -52,4 +52,20 @@ public class SpaceEntity implements Serializable {
 	 */
 	private Integer numPosition;
 
+
+	/**
+	 * 是否开启打折  0 不开启 1开启
+	 */
+	private Integer isDiscount = 0;
+
+	/**
+	 * 打几折  1--原价
+	 */
+	private Float discount;
+
+	/**
+	 * 优惠到期时间
+	 */
+	private Date stopTime;
+
 }

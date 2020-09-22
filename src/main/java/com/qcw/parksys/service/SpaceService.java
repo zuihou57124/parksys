@@ -2,6 +2,7 @@ package com.qcw.parksys.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.qcw.parksys.common.utils.PageUtils;
+import com.qcw.parksys.entity.OrderEntity;
 import com.qcw.parksys.entity.SpaceEntity;
 import com.qcw.parksys.vo.BookParkVo;
 
@@ -21,5 +22,6 @@ public interface SpaceService extends IService<SpaceEntity> {
     PageUtils getSpaceList(Map<String, Object> params);
 
     Boolean bookPark(BookParkVo bookParkVo);
+
 }
 

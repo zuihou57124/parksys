@@ -46,7 +46,7 @@ public class UserEntity implements Serializable {
 	/**
 	 * 账户余额
 	 */
-	private Integer money;
+	private Float money;
 	/**
 	 * vip等级
 	 */
@@ -58,7 +58,7 @@ public class UserEntity implements Serializable {
 	/**
 	 * 花费总额
 	 */
-	private Integer totalCost;
+	private Float totalCost;
 	/**
 	 * 最近一次修改账户日期
 	 */

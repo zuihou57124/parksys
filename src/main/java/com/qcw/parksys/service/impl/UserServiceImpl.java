@@ -120,7 +120,7 @@ public class UserServiceImpl extends ServiceImpl<UserDao, UserEntity> implements
 
         list.forEach((user)->{
             SysInfoEntity sysInfo= new SysInfoEntity();
-            switch (user.getTotalCost()/1000) {
+            switch (user.getTotalCost().intValue()/1000) {
                 case 0:
                     if(user.getVipLevel()!=0){
                         sysInfo.setCreateTime(new Date());

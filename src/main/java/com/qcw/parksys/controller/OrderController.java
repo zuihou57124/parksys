@@ -9,6 +9,7 @@ import com.alipay.easysdk.factory.Factory;
 import com.alipay.easysdk.kernel.Config;
 import com.alipay.easysdk.kernel.util.ResponseChecker;
 import com.alipay.easysdk.payment.common.models.AlipayTradeQueryResponse;
+import com.alipay.easysdk.payment.common.models.AlipayTradeRefundResponse;
 import com.alipay.easysdk.payment.facetoface.models.AlipayTradePrecreateResponse;
 import com.alipay.easysdk.payment.page.models.AlipayTradePagePayResponse;
 import com.google.zxing.BarcodeFormat;
@@ -19,7 +20,9 @@ import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import com.qcw.parksys.common.myconst.MyConst;
 import com.qcw.parksys.config.AliPayConfig;
+import com.qcw.parksys.entity.SpaceEntity;
 import com.qcw.parksys.entity.UserEntity;
+import com.qcw.parksys.service.SpaceService;
 import com.qcw.parksys.vo.BackMoneyVo;
 import com.qcw.parksys.vo.PayOrderVo;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
@@ -54,6 +57,9 @@ public class OrderController {
 
     @Autowired
     private StringRedisTemplate redisTemplate;
+
+    @Autowired
+    SpaceService spaceService;
 
     /**
      * 列表
@@ -159,10 +165,24 @@ public class OrderController {
             orderEntity.setOutTradeNo(outTradeNo);
             orderService.updateById(orderEntity);
 
-            response = Factory.Payment.FaceToFace()
-                    .preCreate(payOrderVo.getSubuject(), outTradeNo,payOrderVo.getTotal().toString());
+            SpaceEntity space = spaceService.getById(orderEntity.getSpaceId());
+            //打折时
+            if(space.getIsDiscount().equals(1)){
 
-            //pay = Factory.Payment.Page().pay("Apple iPhone11 128G", "5799.00", "5799.00", config.notifyUrl);
+                //原价
+                float origin = payOrderVo.getTotal();
+                //打折后的总额
+                float discountRealPay = origin*space.getDiscount();
+
+                response = Factory.Payment.FaceToFace()
+                        .preCreate(payOrderVo.getSubuject(), outTradeNo,String.valueOf(discountRealPay));
+            }
+            else{
+                //不打折时
+                response = Factory.Payment.FaceToFace()
+                        .preCreate(payOrderVo.getSubuject(), outTradeNo,payOrderVo.getTotal().toString());
+            }
+
             // 3. 处理响应或异常
             if (ResponseChecker.success(response)) {
                 System.out.println("调用成功");
@@ -232,6 +252,29 @@ public class OrderController {
             payResult = this.pay(params);
         }
         return payResult;
+    }
+
+
+    /**
+     * @return
+     * 退款测试
+     */
+    @RequestMapping("/test/back")
+    public R backTest() throws Exception {
+
+        // 1. 设置参数（全局只需设置一次）
+        Config config = AliPayConfig.getConfig();
+        Factory.setOptions(config);
+        AlipayTradeRefundResponse response;
+
+        response = Factory.Payment.Common().refund("0ca60169-a","100");
+
+        R backResult = R.error().put("msg","退款失败,请稍后再试");
+        //退款成功
+        if("10000".equals(response.code)){
+            backResult = R.ok().put("msg","退款成功");
+        }
+        return backResult;
     }
 
 

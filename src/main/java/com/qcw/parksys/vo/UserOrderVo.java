@@ -58,12 +58,12 @@ public class UserOrderVo {
     /**
      * 应付总额
      */
-    private Integer totalPayable;
+    private Float totalPayable;
 
     /**
      * 实付总额
      */
-    private Integer totalReal;
+    private Float totalReal;
 
     /**
      * 订单创建日期

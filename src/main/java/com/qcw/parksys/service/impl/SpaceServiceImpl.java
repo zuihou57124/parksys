@@ -169,6 +169,9 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceDao, SpaceEntity> impleme
                     spaceVo.setStatus(item.getStatus());
                     spaceVo.setNextTime(item.getNextTime());
                     spaceVo.setImg(item.getImg());
+                    spaceVo.setIsDiscount(item.getIsDiscount());
+                    spaceVo.setDiscount(item.getDiscount());
+                    spaceVo.setStopTime(item.getStopTime());
 
                     return spaceVo;
                 }).collect(Collectors.toList());

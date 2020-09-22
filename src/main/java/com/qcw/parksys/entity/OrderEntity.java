@@ -46,11 +46,11 @@ public class OrderEntity implements Serializable {
 	/**
 	 * 应付总额
 	 */
-	private Integer totalPayable;
+	private Float totalPayable;
 	/**
 	 * 实付总额
 	 */
-	private Integer totalReal;
+	private Float totalReal;
 
 	/**
 	 * 订单状态

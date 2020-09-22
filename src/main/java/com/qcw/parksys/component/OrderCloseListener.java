@@ -61,12 +61,14 @@ public class OrderCloseListener {
 
         try {
             SysInfoEntity sysInfo = orderService.willValidOrderToSysInfo(order);
-            sysInfoService.save(sysInfo);
+            if(sysInfo!=null){
+                sysInfoService.save(sysInfo);
+            }
             System.out.println(order);
             channel.basicAck(message.getMessageProperties().getDeliveryTag(),false);
         } catch (Exception e) {
             channel.basicReject(message.getMessageProperties().getDeliveryTag(),true);
-            System.out.println("关闭失败,重新入列");
+            System.out.println("处理失败,重新入列");
         }
 
     }
@@ -80,16 +82,18 @@ public class OrderCloseListener {
      */
     @RabbitListener(queues = "order.valid.queue")
     public void validAndToSysInfo(OrderEntity order, Message message, Channel channel) throws IOException {
-        System.out.println("收到即将到期的消息...");
+        System.out.println("收到已经到期的消息...");
 
         try {
             SysInfoEntity sysInfo = orderService.validOrderToSysInfo(order);
-            sysInfoService.save(sysInfo);
+            if(sysInfo!=null){
+                sysInfoService.save(sysInfo);
+            }
             System.out.println(order);
             channel.basicAck(message.getMessageProperties().getDeliveryTag(),false);
         } catch (Exception e) {
             channel.basicReject(message.getMessageProperties().getDeliveryTag(),true);
-            System.out.println("关闭失败,重新入列");
+            System.out.println("处理失败,重新入列");
         }
 
     }

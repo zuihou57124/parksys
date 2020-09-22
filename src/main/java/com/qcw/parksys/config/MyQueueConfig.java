@@ -22,7 +22,7 @@ public class MyQueueConfig {
         HashMap<String, Object> arg = new HashMap<>();
         arg.put("x-dead-letter-exchange","order-event-exchange");
         arg.put("x-dead-letter-routing-key","order.release.event");
-        arg.put("x-message-ttl",60000*5);
+        //arg.put("x-message-ttl",60000*5);
 
         return new Queue("order.delay.queue",true,false,false,arg);
     }
@@ -36,7 +36,7 @@ public class MyQueueConfig {
         HashMap<String, Object> arg = new HashMap<>();
         arg.put("x-dead-letter-exchange","order-event-exchange");
         arg.put("x-dead-letter-routing-key","order.willvalid.event");
-        arg.put("x-message-ttl",60000*3);
+        //arg.put("x-message-ttl",60000*3);
 
         return new Queue("order.willvaliddelay.queue",true,false,false,arg);
     }
