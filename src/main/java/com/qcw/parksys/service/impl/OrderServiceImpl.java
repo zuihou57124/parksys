@@ -107,7 +107,9 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
             //设置车位状态
             SpaceEntity space = spaceService.getOne(new QueryWrapper<SpaceEntity>().eq("id", item.getSpaceId()));
             userBooksVo.setSpaceStatus(space.getStatus());
-
+            userBooksVo.setAbleDiscount(space.getAbleDiscount());
+            userBooksVo.setIsDiscount(space.getIsDiscount());
+            userBooksVo.setDiscount(space.getDiscount());
             //设置预约状态
             userBooksVo.setStatus(item.getStatus());
 
@@ -348,6 +350,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
             userOrderVo.setOrderId(item.getId());
             userOrderVo.setUserId(item.getUserId());
             userOrderVo.setSpaceId(item.getSpaceId());
+
 
             //设置车位到期时间(这里可以不用计算,直接使用车位的信息)
 //            TimeZone.setDefault(TimeZone.getTimeZone("GMT+8"));

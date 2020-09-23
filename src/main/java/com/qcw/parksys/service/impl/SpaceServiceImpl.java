@@ -269,4 +269,63 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceDao, SpaceEntity> impleme
         return this.updateById(space);
     }
 
+    /**
+     * 随机打折
+     */
+    @Override
+    public void discount() {
+
+        QueryWrapper<SpaceEntity> wr = new QueryWrapper<>();
+        wr.eq("is_discount",0);
+        wr.and((w)-> w.eq("able_discount",1));
+
+        List<SpaceEntity> list = this.list(wr);
+        List<SpaceEntity> collect = list.stream().map((item) -> {
+
+            Random random = new Random();
+            if(random.nextInt(10)<5){
+                return null;
+            }
+
+            item.setIsDiscount(1);
+            float discount;
+            discount = (float) 0.7;
+            item.setDiscount(discount);
+
+            //设置优惠时长
+            TimeZone.setDefault(TimeZone.getTimeZone("GMT+8"));
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(new Date());
+            calendar.add(Calendar.HOUR,1);
+            Date stopTime = calendar.getTime();
+            item.setStopTime(stopTime);
+
+            rabbitTemplate.convertAndSend("order-event-exchange","order.creatediscount.event",item,
+                    message -> {
+                        message.getMessageProperties().setExpiration(String.valueOf(1000*60*60));
+                        return message;
+                    }
+                    );
+
+            return item;
+        })
+         .filter(Objects::nonNull)
+         .collect(Collectors.toList());
+
+        this.updateBatchById(collect);
+
+    }
+
+    /**
+     * @param space 取消打折或者优惠
+     */
+    @Override
+    @Transactional
+    public void canceldiscount(SpaceEntity space) {
+
+        space.setIsDiscount(0);
+        this.updateById(space);
+
+    }
+
 }

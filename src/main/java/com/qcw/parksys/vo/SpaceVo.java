@@ -56,6 +56,11 @@ public class SpaceVo implements Serializable {
     private String img;
 
     /**
+     * 是否可以打折
+     */
+    private Integer ableDiscount;
+
+    /**
      * 是否开启打折  0 不开启 1开启
      */
     private Integer isDiscount;

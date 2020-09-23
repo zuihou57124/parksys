@@ -52,6 +52,10 @@ public class SpaceEntity implements Serializable {
 	 */
 	private Integer numPosition;
 
+	/**
+	 * 是否可以打折
+	 */
+	private Integer ableDiscount = 0;
 
 	/**
 	 * 是否开启打折  0 不开启 1开启

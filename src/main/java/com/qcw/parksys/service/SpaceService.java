@@ -23,5 +23,8 @@ public interface SpaceService extends IService<SpaceEntity> {
 
     Boolean bookPark(BookParkVo bookParkVo);
 
+    void discount();
+
+    void canceldiscount(SpaceEntity space);
 }
 

@@ -18,7 +18,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
-//@Component
+@Component
 public class ScheduleScanOrder {
 
     @Autowired
@@ -37,7 +37,7 @@ public class ScheduleScanOrder {
      * 定时扫描订单项,超过30分钟未支付的订单会被自动取消
      */
     @Transactional
-    @Scheduled(cron = "*/30 * * * * ?") //测试使用 30秒 的间隔
+    //@Scheduled(cron = "*/30 * * * * ?") //测试使用 30秒 的间隔
     public void scanOrderAndCancel(){
 
         //获取所有新建状态的订单(即待付款的订单项)
@@ -70,7 +70,7 @@ public class ScheduleScanOrder {
      * 定时扫描订单项,获取预约即将到期或者车位即将到期的订单,封装成消息实体类，保存到数据库
      */
     @Transactional
-    @Scheduled(cron = "*/15 * * * * ?") //测试使用 30秒 的间隔
+    //@Scheduled(cron = "*/15 * * * * ?") //测试使用 30秒 的间隔
     public void scanWillOrderAndToSysInfoAndSaveToMysql(){
 
         List<SysInfoEntity> sysInfoList = orderService.getWillValidOrdersByUserIdAndToSysInfo(null);
@@ -83,7 +83,7 @@ public class ScheduleScanOrder {
      * 定时扫描订单项,获取预约已经到期到期或者车位已经到期的订单,封装成消息实体类，保存到数据库
      */
     @Transactional
-    @Scheduled(cron = "*/15 * * * * ?") //测试使用 30秒 的间隔
+    //@Scheduled(cron = "*/15 * * * * ?") //测试使用 30秒 的间隔
     public void scanValidOrderAndToSysInfoAndSaveToMysql(){
 
         List<SysInfoEntity> sysInfoList = orderService.getValidOrdersByUserIdAndToSysInfo(null);
@@ -96,13 +96,23 @@ public class ScheduleScanOrder {
      * 定时扫描用户信息,更新用户vip等级等信息
      */
     @Transactional
-    @Scheduled(cron = "*/15 * * * * ?") //测试使用 30秒 的间隔
+    //@Scheduled(cron = "*/15 * * * * ?") //测试使用 30秒 的间隔
     public void scanAndupdateUser(){
 
         List<SysInfoEntity> sysInfoList = userService.updateUserInfo();
         //保存到数据库
         sysInfoService.saveBatch(sysInfoList);
 
+    }
+
+
+    /**
+     * 随机打折
+     */
+    @Transactional
+    @Scheduled(cron = "0 0 0/1 * * ? ")
+    public void discount(){
+        spaceService.discount();
     }
 
 }

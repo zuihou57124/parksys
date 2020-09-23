@@ -65,6 +65,31 @@ public class MyQueueConfig {
         return new Queue("order.release.queue",true,false,false);
     }
 
+    /////////////////
+    /**
+     * @return
+     * 优惠队列
+     */
+    @Bean
+    public Queue spaceDiscountQueue(){
+
+        HashMap<String, Object> arg = new HashMap<>();
+        arg.put("x-dead-letter-exchange","order-event-exchange");
+        arg.put("x-dead-letter-routing-key","space.canceldiscount.event");
+        //arg.put("x-message-ttl",null);
+
+        return new Queue("space.discount.queue",true,false,false,arg);
+    }
+
+    @Bean
+    public Queue spaceCancelDiscountQueue(){
+
+        return new Queue("space.canceldiscount.queue",true,false,false);
+    }
+
+
+
+////////////////////////
     /**
      * @return
      * 订单即将到期队列
@@ -94,6 +119,26 @@ public class MyQueueConfig {
 
         return new TopicExchange("order-event-exchange",true,false);
     }
+
+
+/////////////////////////////
+    @Bean
+    public Binding spaceCreateDiscountBinding(){
+        return new Binding("space.discount.queue",
+                Binding.DestinationType.QUEUE,
+                "order-event-exchange",
+                "order.creatediscount.event",null);
+    }
+
+    @Bean
+    public Binding spaceCancelDiscountBinding(){
+        return new Binding("space.canceldiscount.queue",
+                Binding.DestinationType.QUEUE,
+                "order-event-exchange",
+                "space.canceldiscount.event",null);
+    }
+    ////////////////////////////////////////
+
 
 
     @Bean

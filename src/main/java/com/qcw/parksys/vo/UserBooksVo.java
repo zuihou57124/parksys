@@ -55,4 +55,19 @@ public class UserBooksVo {
      */
     private Date validTime;
 
+    /**
+     * 是否可以打折
+     */
+    private Integer ableDiscount;
+
+    /**
+     * 是否开启打折
+     */
+    private Integer isDiscount;
+
+    /**
+     * 打几折
+     */
+    private Float discount;
+
 }

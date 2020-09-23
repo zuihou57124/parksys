@@ -167,7 +167,7 @@ public class OrderController {
 
             SpaceEntity space = spaceService.getById(orderEntity.getSpaceId());
             //打折时
-            if(space.getIsDiscount().equals(1)){
+            if(space.getIsDiscount().equals(1) && space.getAbleDiscount().equals(1)){
 
                 //原价
                 float origin = payOrderVo.getTotal();
