@@ -1,17 +1,20 @@
 package com.qcw.parksys.controller;
 
 import com.aliyun.oss.OSS;
+import com.aliyun.oss.OSSClientBuilder;
 import com.aliyun.oss.model.PutObjectRequest;
 import com.aliyun.oss.model.PutObjectResult;
 import com.qcw.parksys.common.utils.R;
 import com.qcw.parksys.entity.UserEntity;
 import com.qcw.parksys.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -24,20 +27,22 @@ import java.util.Date;
 @RequestMapping("parksys/oss")
 public class OSSController {
 
-    @Autowired(required = false)
-    OSS ossClient;
+    @Value("${spring.cloud.alicloud.oss.endpoint}")
+    public String endpoint;
+
+    @Value("${spring.cloud.alicloud.access-key}")
+    public String accessId;
+
+    @Value("${spring.cloud.alicloud.secret-key}")
+    public String secretId;
 
     @Autowired
     UserService userService;
 
-    @Value("${spring.cloud.alicloud.oss.endpoint}")
-    public String endpoint;
-
     @Value("${spring.cloud.alicloud.oss.bucket}")
     public String bucket;
 
-    @Value("${spring.cloud.alicloud.access-key}")
-    public String accessId;
+    OSS ossClient = null;
 
     /**
      * @param file
@@ -47,6 +52,8 @@ public class OSSController {
     @PostMapping("/upload")
     @ResponseBody
     public R uploadImg(Integer userId,MultipartFile file) throws IOException {
+
+        ossClient = new OSSClientBuilder().build(endpoint, accessId, secretId);
 
         String key = "parksys/userhead/"+file.getOriginalFilename();
 
