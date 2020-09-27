@@ -8,6 +8,7 @@ import com.qcw.parksys.service.OrderService;
 import com.qcw.parksys.service.SysInfoService;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
@@ -39,6 +40,22 @@ public class SysInfoController {
         PageUtils page = sysInfoService.getSysInfoList(params);
 
         return R.ok().put("page",page);
+    }
+
+    /**
+     * @param params
+     * @return
+     * 删除消息
+     */
+    @Transactional
+    @PostMapping("delsysinfo")
+    public R delSysInfo(@RequestBody Map<String, Integer> params){
+
+        Integer id = params.get("id");
+
+        sysInfoService.removeById(id);
+
+        return R.ok();
     }
 
     /**

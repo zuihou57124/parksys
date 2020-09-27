@@ -68,11 +68,11 @@ public class OSSController {
 
         String imgUrl = "https://qinfengoss.oss-cn-shenzhen.aliyuncs.com/parksys/userhead/" + file.getOriginalFilename();
         //更新用户头像信息
-        UserEntity user = userService.getById(userId);
-        user.setHeadImg(imgUrl);
-        userService.updateById(user);
+//        UserEntity user = userService.getById(userId);
+//        user.setHeadImg(imgUrl);
+//        userService.updateById(user);
 
-        return R.ok();
+        return R.ok().put("url",imgUrl);
     }
 
     /**

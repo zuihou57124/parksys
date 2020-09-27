@@ -328,4 +328,112 @@ public class UserController {
         return R.ok();
     }
 
+
+    /**
+     * 发送验证码(修改邮箱)
+     */
+    @RequestMapping("sendCodeToOriginEmail")
+    public R sendCodeToOriginEmail(HttpServletRequest request,@RequestParam("userId") Integer userId){
+
+        String codeFromRedis = redisTemplate.opsForValue().get("newemail:"+userId+":");
+        if(!StringUtils.isEmpty(codeFromRedis)){
+            return R.ok().put("data",codeFromRedis).put("msg","验证码已发送至当前邮箱");
+        }
+
+        //根据用户id获取用户的邮箱
+        String toEmail = userService.getById(userId).getEmail();
+
+        String code = UUID.randomUUID().toString().substring(0,5);
+        //向redis存入验证码,使用邮箱账号来区分不同的用户,验证码5分钟内有效
+        redisTemplate.opsForValue().set("updatemail:"+userId+":",code,5, TimeUnit.MINUTES);
+        //向邮箱发送验证码
+        boolean isSuccess = mailSend.sendRegisterCode("1545409483@qq.com", toEmail, "验证码", code);
+        if(!isSuccess){
+            return R.error().put("msg","邮箱发送失败,请重试");
+        }
+
+        System.out.println(redisTemplate.opsForValue().get("updatemail:"+userId+":"));
+
+        return R.ok().put("data",code).put("msg","验证码已发送至当前邮箱");
+    }
+
+
+    /**
+     * 发送验证码(到新邮箱)
+     */
+    @RequestMapping("sendCodeToNewEmail")
+    public R sendCodeToNewEmail(@RequestParam("userId") Integer userId,@RequestParam("email") String email){
+
+        String codeFromRedis = redisTemplate.opsForValue().get("newemail:"+userId+":");
+        if(!StringUtils.isEmpty(codeFromRedis)){
+            return R.ok().put("data",codeFromRedis).put("msg","验证码已发送至新邮箱");
+        }
+
+        String code = UUID.randomUUID().toString().substring(0,5);
+        //向redis存入验证码,使用邮箱账号来区分不同的用户,验证码5分钟内有效
+        redisTemplate.opsForValue().set("newemail:"+userId+":",code,5, TimeUnit.MINUTES);
+        //向邮箱发送验证码
+        boolean isSuccess = mailSend.sendRegisterCode("1545409483@qq.com", email, "修改邮箱--验证码", code);
+        if(!isSuccess){
+            return R.error().put("msg","邮箱发送失败,请重试");
+        }
+
+        System.out.println(redisTemplate.opsForValue().get("newemail:"+userId+":"));
+
+        return R.ok().put("data",code).put("msg","验证码已发送至新邮箱");
+    }
+
+
+    /**
+     * 修改邮箱  预检
+     */
+    @RequestMapping("/updateEmailPre")
+    public R updateEamilPre(@RequestBody Map<String,Object> params){
+
+        Integer userId = (Integer) params.get("userId");
+        String code = (String) params.get("code");
+
+        String codeFromRedis = redisTemplate.opsForValue().get("updatemail:" + userId + ":");
+
+        if(StringUtils.isEmpty(codeFromRedis)){
+           return R.error().put("msg","验证码已失效,请重发");
+        }
+
+        if(!codeFromRedis.equals(code)){
+            return R.error().put("msg","验证码错误");
+        }
+
+        return R.ok();
+    }
+
+    /**
+     * 修改邮箱
+     */
+    @Transactional
+    @PostMapping("/updateEmail")
+    public R updateEamil(@RequestBody Map<String,Object> params){
+
+        Integer userId = (Integer) params.get("userId");
+        String code = (String) params.get("code");
+        String email = (String) params.get("email");
+
+
+        String codeFromRedis = redisTemplate.opsForValue().get("newemail:"+userId+":");
+
+        if(StringUtils.isEmpty(codeFromRedis)){
+            return R.error().put("msg","验证码已失效,请重发");
+        }
+
+        if(!codeFromRedis.equals(code)){
+            return R.error().put("msg","验证码错误");
+        }
+
+        //更新邮箱
+        UserEntity user = userService.getById(userId);
+        user.setEmail(email);
+        userService.updateById(user);
+
+        return R.ok();
+    }
+
 }
