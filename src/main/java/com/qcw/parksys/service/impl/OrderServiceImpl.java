@@ -16,6 +16,8 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -192,6 +194,94 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
         TimeZone.setDefault(TimeZone.getTimeZone("GMT+8"));
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(new Date());
+        calendar.add(Calendar.HOUR, duration);
+        Date nextTime = calendar.getTime();
+        space.setNextTime(nextTime);
+        space.setStatus(MyConst.SpaceStatus.TOKEN.getCode());
+
+        userService.updateById(user);
+        spaceService.updateById(space);
+        this.updateById(order);
+
+        //车位即将到期--rabbit
+        rabbitTemplate.convertAndSend(
+                "order-event-exchange", "order.createwillvaliddelay.event", order
+                , message -> {
+                    //过期
+                    message.getMessageProperties().setExpiration(String.valueOf(1000 * 60 * 60 * (duration - 1)));
+                    return message;
+                }
+        );
+
+        //车位已经到期--rabbit
+        rabbitTemplate.convertAndSend(
+                "order-event-exchange", "order.createvaliddelay.event", order
+                , message -> {
+                    //过期
+                    message.getMessageProperties().setExpiration(String.valueOf(1000 * 60 * 60 * duration));
+                    return message;
+                }
+        );
+
+        return 50001;
+    }
+
+    /**
+     * @param params
+     * @return 续费
+     */
+    @Override
+    @Transactional
+    public Integer reNew(Map<String, Object> params) {
+
+        //付款需要传入或有的参数:   用户信息，车位信息，订单信息,会员信息
+        Integer userId = (Integer) params.get("userId");
+        Integer spaceId = (Integer) params.get("spaceId");
+        Integer orderId = (Integer) params.get("orderId");
+
+        UserEntity user = userService.getById(userId);
+        SpaceEntity space = spaceService.getById(spaceId);
+        VipEntity vip = vipService.getOne(new QueryWrapper<VipEntity>().eq("vip_level", user.getVipLevel()));
+        TypeEntity type = typeService.getById(space.getTypeId());
+        OrderEntity order = this.getById(orderId);
+
+        //时长
+        Integer duration = (Integer) params.get("duration");
+        //应付总额
+        float total = type.getPrice() * duration;
+        float realPay = total;
+        //实付总额(打折等优惠)
+        if (vip != null) {
+            realPay = Math.toIntExact(Math.round((double) total * vip.getDiscount()));
+        }
+
+        //扣除用户余额和更新用户累计花费
+        user.setMoney(user.getMoney() - realPay);
+        user.setTotalCost(user.getTotalCost() + realPay);
+
+        //更新订单信息
+        //order.setStatus(MyConst.OrderStatus.DONE.getCode());
+        order.setTotalPayable(total+order.getTotalPayable());
+        order.setTotalReal(realPay+order.getTotalReal());
+        order.setValidStatus(3);
+        order.setDuration(duration+order.getDuration());
+        order.setQrCodeUrl("");
+        //更新设置支付时间
+        order.setPayTime(new Date());
+
+        //更新车位到期时间 状态等等
+        TimeZone.setDefault(TimeZone.getTimeZone("GMT+8"));
+        Calendar calendar = Calendar.getInstance();
+        SimpleDateFormat ft = new SimpleDateFormat ("yyyy-MM-dd hh:mm:ss");
+        //从数据库取出的时间到这里格式变了,不知道为什么,所以需要转换格式
+        String timeStr = ft.format(space.getNextTime());
+
+        try {
+            calendar.setTime(ft.parse(timeStr));
+        } catch (ParseException e) {
+            System.out.println("日期转换出错");
+        }
+
         calendar.add(Calendar.HOUR, duration);
         Date nextTime = calendar.getTime();
         space.setNextTime(nextTime);

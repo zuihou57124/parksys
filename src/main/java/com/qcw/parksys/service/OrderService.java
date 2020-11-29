@@ -25,6 +25,8 @@ public interface OrderService extends IService<OrderEntity> {
 
     Integer pay(Map<String, Object> params);
 
+    Integer reNew(Map<String, Object> params);
+
     /**
      * @param params
      * @return

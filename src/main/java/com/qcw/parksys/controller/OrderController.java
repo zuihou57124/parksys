@@ -297,26 +297,39 @@ public class OrderController {
     public R pay(@RequestBody Map<String, Object> params) {
 
         Integer userId = (Integer) params.get("userId");
-        boolean reNewFlag = (boolean) params.get("reNew");
+        Boolean reNewFlag = (Boolean) params.get("reNew");
 
         //续租
-        if(reNewFlag){
+        if(reNewFlag!=null && reNewFlag){
 
+            Integer info = orderService.reNew(params);
 
+            if (info.equals(MyConst.PaySatus.VALID.getCode())) {
+                return R.error(info, MyConst.PaySatus.VALID.getMsg());
+            }
+            if (info.equals(MyConst.PaySatus.NOMONEY.getCode())) {
+                return R.error(info, MyConst.PaySatus.NOMONEY.getMsg());
+            }
+
+            //订单成功关闭后，删除token
+            redisTemplate.delete("user:" + userId.toString() + "submitToken:");
+
+            return R.ok();
 
         }
 
+        //第一次付费
         //从redis获取的token
-        String submitTokenFromRedis = redisTemplate.opsForValue().get("user:" + userId.toString() + "submitToken:");
-        if(StringUtils.isEmpty(submitTokenFromRedis)){
-            return R.error().put("msg","订单已失效,请重新下单");
-        }
-        //用户下单时发送的token
-        String submitTokenFromUser = (String) params.get("submitToken");
-
-        if(!submitTokenFromRedis.equals(submitTokenFromUser)){
-            return R.error().put("msg","订单已失效,请重新下单");
-        }
+//        String submitTokenFromRedis = redisTemplate.opsForValue().get("user:" + userId.toString() + "submitToken:");
+//        if(StringUtils.isEmpty(submitTokenFromRedis)){
+//            return R.error().put("msg","订单已失效,请重新下单");
+//        }
+//        //用户下单时发送的token
+//        String submitTokenFromUser = (String) params.get("submitToken");
+//
+//        if(!submitTokenFromRedis.equals(submitTokenFromUser)){
+//            return R.error().put("msg","订单已失效,请重新下单");
+//        }
 
         Integer info = orderService.pay(params);
 
