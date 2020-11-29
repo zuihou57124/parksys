@@ -32,6 +32,11 @@ public class OrderEntity implements Serializable {
 	private String outTradeNo;
 
 	/**
+	 * 续租支付宝订单号
+	 */
+	private String renewNo;
+
+	/**
 	 * 用户id
 	 */
 	private Integer userId;

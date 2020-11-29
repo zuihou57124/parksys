@@ -24,10 +24,17 @@ public class SpaceEntity implements Serializable {
 	 */
 	@TableId
 	private Integer id;
+
 	/**
 	 * 车位地区id
 	 */
 	private String positionId;
+
+	/**
+	 * 所属停车场 id
+	 */
+	private Integer parkId;
+
 	/**
 	 * 车位类型id
 	 */

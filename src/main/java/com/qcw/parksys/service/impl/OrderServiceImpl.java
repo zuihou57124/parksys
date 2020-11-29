@@ -662,6 +662,10 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
             sysInfo.setCreateTime(new Date());
             sysInfo.setUserId(orderFromDb.getUserId());
             PositionEntity position = positionService.getById(space.getPositionId());
+            //到期后，剩余车位加1
+            position.setRest(position.getRest()+1);
+            positionService.updateById(position);
+
             TypeEntity type = typeService.getById(space.getTypeId());
             String info = "尊敬的用户,您预约的 " + position.getPositionName() + " 的" + type.getTypeName() + " 的预约已经失效";
             sysInfo.setInfo(info);
@@ -685,6 +689,11 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
             sysInfo.setCreateTime(new Date());
             sysInfo.setUserId(orderFromDb.getUserId());
             PositionEntity position = positionService.getById(space.getPositionId());
+
+            //到期后，剩余车位加1
+            position.setRest(position.getRest()+1);
+            positionService.updateById(position);
+
             TypeEntity type = typeService.getById(space.getTypeId());
             String info = "尊敬的用户,您租借的 " + position.getPositionName() + " 的" + type.getTypeName() + " 的车位已经到期";
             sysInfo.setInfo(info);

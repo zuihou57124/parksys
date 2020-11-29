@@ -12,32 +12,33 @@ import lombok.Data;
  * 
  * @author qinfeng
  * @email zuihou57124@gmail.com
- * @date 2020-08-03 09:33:17
+ * @date 2020-09-30 08:48:38
  */
 @Data
-@TableName("position")
-public class PositionEntity implements Serializable {
+@TableName("car_park")
+public class CarParkEntity implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	/**
-	 * 地区id
+	 * 
 	 */
 	@TableId
 	private Integer id;
-	/**
-	 * 地区名称
-	 */
-	private String positionName;
 
 	/**
-	 * geo id
+	 * 省市区 id
 	 */
 	private Integer geoId;
 
 	/**
+	 * 停车场名称
+	 */
+	private String name;
+
+	/**
 	 * 停车场图片
 	 */
-	private String imgUrl;
+	private String imrUrl;
 
 	/**
 	 * 车位总数

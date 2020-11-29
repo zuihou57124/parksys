@@ -79,9 +79,16 @@ public class UserController {
         }
 
         QueryWrapper<UserEntity> wrapper = new QueryWrapper<>();
-        wrapper.eq("username",userVo.getUsername());
-        wrapper.or()
-               .eq("email",userVo.getEmail());
+        //wrapper.eq("username",userVo.getUsername());
+        wrapper.or(
+                (wrapper1)->{
+                        wrapper1.eq("email",userVo.getEmail());
+                        wrapper1.or()
+                                .eq("username",userVo.getUsername());
+                }
+        );
+//        wrapper.or()
+//               .eq("email",userVo.getEmail());
         wrapper.and((wrapper1)->{
             wrapper1.eq("password",userVo.getPassword());
         });

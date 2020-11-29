@@ -30,10 +30,10 @@ public class PositionController {
     /**
      * 列表
      */
-    @RequestMapping("/list")
-    @RequiresPermissions("parksys:position:list")
+    @RequestMapping("/parklist")
     public R list(@RequestParam Map<String, Object> params){
-        PageUtils page = positionService.queryPage(params);
+
+        PageUtils page = positionService.getParkList(params);
 
         return R.ok().put("page", page);
     }
@@ -43,7 +43,6 @@ public class PositionController {
      * 信息
      */
     @RequestMapping("/info/{id}")
-    @RequiresPermissions("parksys:position:info")
     public R info(@PathVariable("id") Integer id){
 		PositionEntity position = positionService.getById(id);
 
@@ -54,7 +53,6 @@ public class PositionController {
      * 保存
      */
     @RequestMapping("/save")
-    @RequiresPermissions("parksys:position:save")
     public R save(@RequestBody PositionEntity position){
 		positionService.save(position);
 
@@ -65,7 +63,6 @@ public class PositionController {
      * 修改
      */
     @RequestMapping("/update")
-    @RequiresPermissions("parksys:position:update")
     public R update(@RequestBody PositionEntity position){
 		positionService.updateById(position);
 
@@ -76,7 +73,6 @@ public class PositionController {
      * 删除
      */
     @RequestMapping("/delete")
-    @RequiresPermissions("parksys:position:delete")
     public R delete(@RequestBody Integer[] ids){
 		positionService.removeByIds(Arrays.asList(ids));
 

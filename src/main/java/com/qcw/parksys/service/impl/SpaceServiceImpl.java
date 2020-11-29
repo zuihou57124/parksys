@@ -68,10 +68,13 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceDao, SpaceEntity> impleme
     public PageUtils getSpaceList(Map<String, Object> params) {
 
         QueryWrapper<SpaceEntity> wrapper = new QueryWrapper<>();
+        //各种条件查询
         String position_name = (String) params.get("position");
+        String parkId = (String) params.get("parkId");
         String type_name = (String) params.get("type");
         Integer price = (Integer) params.get("price");
         String status = (String) params.get("status");
+
 
         //省市区筛选
         String pro = (String) params.get("pro");
@@ -109,12 +112,17 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceDao, SpaceEntity> impleme
             wrapper.in("position_id",ids);
         }
 
-        //参数是否携带车位地区信息
+        //参数是否携带停车场名称
         if(!StringUtils.isEmpty(position_name)){
             PositionEntity positionEntity = positionService.getOne(
                     new QueryWrapper<PositionEntity>()
                     .eq("position_name", position_name));
             wrapper.eq("position_id",positionEntity.getId());
+        }
+
+        //参数是否携带停车场id
+        if(parkId!=null){
+            wrapper.eq("park_id",parkId);
         }
 
         //参数是否携带车位类型信息
@@ -153,7 +161,7 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceDao, SpaceEntity> impleme
 
                     //获取地点信息
                     PositionEntity position = positionService.getOne(new QueryWrapper<PositionEntity>()
-                            .eq("id", item.getPositionId()));
+                            .eq("id", item.getParkId()));
 
                     //获取 省市区 信息
                     GeoPosition geo = geoPositionService.getById(position.getGeoId());
@@ -167,11 +175,17 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceDao, SpaceEntity> impleme
                     spaceVo.setPrice(typeEntity.getPrice());
                     spaceVo.setType(typeEntity.getTypeName());
                     spaceVo.setStatus(item.getStatus());
-                    spaceVo.setNextTime(item.getNextTime());
                     spaceVo.setImg(item.getImg());
+
                     spaceVo.setIsDiscount(item.getIsDiscount());
                     spaceVo.setDiscount(item.getDiscount());
+
                     spaceVo.setStopTime(item.getStopTime());
+                    spaceVo.setNextTime(item.getNextTime());
+
+                    spaceVo.setParkId(position.getId());
+                    spaceVo.setParkName(position.getPositionName());
+
 
                     return spaceVo;
                 }).collect(Collectors.toList());
@@ -199,6 +213,9 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceDao, SpaceEntity> impleme
         UserEntity user = userService.getOne(new QueryWrapper<UserEntity>().eq("id", bookParkVo.getUserId()));
         TypeEntity type = typeService.getOne(new QueryWrapper<TypeEntity>().eq("id", space.getTypeId()));
         VipEntity vip = vipService.getOne(new QueryWrapper<VipEntity>().eq("vip_level", user.getVipLevel()));
+        PositionEntity cartPark = positionService.getById(space.getPositionId());
+        //预约成功后，停车场剩余车位减一
+        cartPark.setRest(cartPark.getRest()-1);
 
         //重新判断预约是车位是否 处于空闲状态
         if(space.getStatus()!=MyConst.SpaceStatus.AVALIABLE.getCode()){

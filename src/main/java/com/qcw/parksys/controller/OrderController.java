@@ -140,7 +140,7 @@ public class OrderController {
         }
 
         //检查订单状态
-        if(!orderEntity.getStatus().equals(MyConst.OrderStatus.CREATED.getCode())){
+        if(!orderEntity.getStatus().equals(MyConst.OrderStatus.CREATED.getCode()) && !payOrderVo.getRenew()){
             return R.error().put("msg","订单已取消或者已过期!");
         }
 
@@ -162,7 +162,12 @@ public class OrderController {
             //支付宝订单号
             String outTradeNo = UUID.randomUUID().toString().substring(0,10);
             //设置用户订单的支付宝订单号
-            orderEntity.setOutTradeNo(outTradeNo);
+            //判断是否续租
+            if(payOrderVo.getRenew()){
+                orderEntity.setRenewNo(outTradeNo);
+            }else {
+                orderEntity.setOutTradeNo(outTradeNo);
+            }
             orderService.updateById(orderEntity);
 
             SpaceEntity space = spaceService.getById(orderEntity.getSpaceId());
@@ -237,6 +242,8 @@ public class OrderController {
     @PostMapping("/test/queryAndClose")
     public R query(@RequestBody Map<String, Object> params) throws Exception {
 
+        Boolean reNewFlag = (Boolean) params.get("reNew");
+
         // 1. 设置参数（全局只需设置一次）
         Config config = AliPayConfig.getConfig();
         Factory.setOptions(config);
@@ -245,7 +252,12 @@ public class OrderController {
         //查询出订单的支付宝订单号,调用支付宝接口查询订单是否支付
         Integer orderId = (Integer) params.get("orderId");
         OrderEntity orderEntity = orderService.getById(orderId);
-        response = Factory.Payment.Common().query(orderEntity.getOutTradeNo());
+        if(reNewFlag!=null && reNewFlag){
+            response = Factory.Payment.Common().query(orderEntity.getRenewNo());
+        }else {
+            response = Factory.Payment.Common().query(orderEntity.getOutTradeNo());
+        }
+
         //支付宝交易成功,订单状态改变
         R payResult = R.error().put("msg","您还未支付");
         if("10000".equals(response.code)){
@@ -285,6 +297,14 @@ public class OrderController {
     public R pay(@RequestBody Map<String, Object> params) {
 
         Integer userId = (Integer) params.get("userId");
+        boolean reNewFlag = (boolean) params.get("reNew");
+
+        //续租
+        if(reNewFlag){
+
+
+
+        }
 
         //从redis获取的token
         String submitTokenFromRedis = redisTemplate.opsForValue().get("user:" + userId.toString() + "submitToken:");

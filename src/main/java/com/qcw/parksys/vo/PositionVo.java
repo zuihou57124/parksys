@@ -1,10 +1,12 @@
-package com.qcw.parksys.entity;
+package com.qcw.parksys.vo;
 
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
+
 import lombok.Data;
 
 /**
@@ -12,27 +14,31 @@ import lombok.Data;
  * 
  * @author qinfeng
  * @email zuihou57124@gmail.com
- * @date 2020-08-03 09:33:17
+ * @date 2020-09-30 08:48:38
  */
 @Data
-@TableName("position")
-public class PositionEntity implements Serializable {
-	private static final long serialVersionUID = 1L;
+public class PositionVo {
 
-	/**
-	 * 地区id
-	 */
-	@TableId
 	private Integer id;
-	/**
-	 * 地区名称
-	 */
-	private String positionName;
 
 	/**
-	 * geo id
+	 * 省市区 id
 	 */
 	private Integer geoId;
+
+	/**
+	 * 车位所在省市区
+	 */
+	private String province;
+
+	private String city;
+
+	private String region;
+
+	/**
+	 * 停车场名称
+	 */
+	private String name;
 
 	/**
 	 * 停车场图片
@@ -43,10 +49,14 @@ public class PositionEntity implements Serializable {
 	 * 车位总数
 	 */
 	private Integer num;
-
 	/**
 	 * 剩余车位
 	 */
 	private Integer rest;
+
+	/**
+	 * 车位列表
+	 */
+	private List<SpaceVo> spaceVoList;
 
 }

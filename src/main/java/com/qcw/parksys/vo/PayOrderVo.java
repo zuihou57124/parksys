@@ -17,4 +17,7 @@ public class PayOrderVo {
 
     Boolean changed = false;
 
+    //是否续租,默认否
+    Boolean renew = false;
+
 }
